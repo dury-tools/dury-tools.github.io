@@ -2940,7 +2940,13 @@ async function loadData() {
     }
   } catch(e) { console.warn('[SKU Tool] localStorage read failed:', e.message); }
 
-  // Tier 2: Google Sheets (may work if sheet is public)
+  // Tier 2: Embedded CSV (authoritative — updated monthly with the tool)
+  showLoading('Loading embedded data...');
+  if (EMBEDDED_CSV_DATA && EMBEDDED_CSV_DATA.trim().length > 100) {
+    if (parseCSVData(EMBEDDED_CSV_DATA, 'Embedded (May 2026)')) return;
+  }
+
+  // Tier 3: Google Sheets fallback (only if no embedded data)
   showLoading('Checking for live data...');
   try {
     const resp = await fetch(getSheetExportUrl(), { redirect: 'follow' });
@@ -2951,12 +2957,6 @@ async function loadData() {
       }
     }
   } catch(e) { /* fall through */ }
-
-  // Tier 3: Embedded CSV
-  showLoading('Loading embedded data...');
-  if (EMBEDDED_CSV_DATA && EMBEDDED_CSV_DATA.trim().length > 100) {
-    if (parseCSVData(EMBEDDED_CSV_DATA, 'Embedded (May 2026)')) return;
-  }
 
   // Tier 4: Upload modal
   hideLoading();
