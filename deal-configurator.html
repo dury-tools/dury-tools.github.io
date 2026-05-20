@@ -4,7 +4,6 @@
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
 <title>Zoom Workplace Deal Configurator</title>
-<script src="https://cdn.sheetjs.com/xlsx-0.20.3/package/dist/xlsx.full.min.js"></script>
 <style>
 *{box-sizing:border-box;margin:0;padding:0}
 body{font-family:-apple-system,BlinkMacSystemFont,"Segoe UI",Roboto,sans-serif;background:#F7F8FA;color:#1a1a1a;line-height:1.5}
@@ -70,66 +69,69 @@ th{background:#f7f8fa;font-weight:600;color:#444}
 .summary-item .label{font-size:11px;color:#666;text-transform:uppercase;letter-spacing:.5px}
 .summary-item .value{font-size:14px;font-weight:600;color:#1a1a1a}
 .price-tag{font-size:12px;color:#0B5CFF;font-weight:600}
-.price-monthly{color:#666;font-size:11px;font-weight:500;margin-left:4px}
-.staleness-banner{display:none;align-items:center;justify-content:center;gap:12px;padding:10px 24px;background:#FFF3CD;border-bottom:1px solid #FFE69C;font-size:.82rem;color:#664D03;flex-shrink:0}
-.staleness-banner.visible{display:flex}
-.modal-overlay{display:none;position:fixed;top:0;left:0;right:0;bottom:0;background:rgba(0,0,0,.5);z-index:200;align-items:center;justify-content:center;padding:20px}
-.modal-overlay.visible{display:flex}
-.modal{background:#fff;border-radius:12px;padding:32px;max-width:500px;width:100%;box-shadow:0 8px 32px rgba(0,0,0,.2)}
-.modal h2{font-size:18px;margin-bottom:12px}
-.modal p{font-size:13px;color:#666;margin-bottom:16px}
-.drop-zone{border:2px dashed #d0d0d0;border-radius:8px;padding:40px 20px;text-align:center;cursor:pointer;transition:all .2s}
-.drop-zone:hover,.drop-zone.dragover{border-color:#0B5CFF;background:#f0f6ff}
-.drop-zone .icon{font-size:32px;margin-bottom:8px}
-.drop-zone .text{font-size:14px;font-weight:600;color:#333}
-.drop-zone .subtext{font-size:12px;color:#888;margin-top:4px}
-@media print{.header,.progress-bar,.progress-labels,.btn-row,.export-btns,.no-print,.staleness-banner,.modal-overlay{display:none!important}body{background:#fff}.card,.result-card{box-shadow:none;border:1px solid #ddd;page-break-inside:avoid}}
+.disclaimer-banner{background:#FFF3CD;border:1px solid #FFECB5;border-radius:8px;padding:12px 20px;margin:12px auto 0;max-width:800px;font-size:12px;color:#664D03;line-height:1.5;display:flex;align-items:flex-start;gap:10px}
+.disclaimer-banner .disc-icon{font-size:18px;flex-shrink:0;margin-top:1px}
+.disclaimer-banner strong{color:#664D03}
+@media print{.header,.progress-bar,.progress-labels,.btn-row,.export-btns,.no-print,.disclaimer-banner{display:none!important}body{background:#fff}.card,.result-card{box-shadow:none;border:1px solid #ddd;page-break-inside:avoid}}
 </style>
 </head>
 <body>
 <div class="header">
   <div class="logo">zoom<span>Workplace Deal Configurator</span></div>
-  <div class="no-print" style="display:flex;align-items:center;gap:12px">
-    <span id="priceListBadge" style="font-size:11px;padding:4px 10px;border-radius:12px;background:#e8f0ff;color:#0B5CFF;font-weight:600;cursor:pointer" onclick="showUploadModal()" title="Click to update price list">📋 <span id="priceListLabel">April 2026</span></span>
-    <button class="btn-secondary no-print" style="font-size:11px;padding:4px 10px;border-radius:6px" onclick="showUploadModal()">🔄 Update Prices</button>
-  </div>
+  <div class="no-print" style="font-size:12px;color:#666">Channel Partner Tool <span style="margin-left:8px;padding:2px 6px;background:#f0f6ff;border-radius:4px;color:#0B5CFF;font-weight:600;cursor:pointer" onclick="document.getElementById('whatsNewModal').style.display='flex'">v1.5.1</span></div>
 </div>
-
-<!-- STALENESS BANNER -->
-<div class="staleness-banner" id="stalenessBanner">
-  <span>⚠️ <strong>Price list may be outdated.</strong> <span id="stalenessMsg"></span></span>
-  <button style="padding:4px 12px;border-radius:4px;background:#664D03;color:#fff;font-size:11px;font-weight:600;border:none;cursor:pointer" onclick="showUploadModal()">Update Now</button>
-  <button style="background:none;border:none;font-size:16px;cursor:pointer;color:#664D03;opacity:.6" onclick="this.parentElement.classList.remove('visible')">✕</button>
-</div>
-
-<!-- UPLOAD MODAL -->
-<div class="modal-overlay" id="uploadModal">
-  <div class="modal">
+<div id="whatsNewModal" style="display:none;position:fixed;top:0;left:0;right:0;bottom:0;background:rgba(0,0,0,.5);z-index:1000;align-items:center;justify-content:center;padding:20px" onclick="if(event.target===this)this.style.display='none'">
+  <div style="background:#fff;border-radius:12px;max-width:600px;width:100%;max-height:80vh;overflow-y:auto;padding:28px;position:relative">
     <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:16px">
-      <h2>🔄 Update Price List</h2>
-      <button onclick="closeUploadModal()" style="background:none;border:none;font-size:20px;cursor:pointer;color:#666">✕</button>
+      <h2 style="font-size:18px;color:#1a1a1a">What's New</h2>
+      <button onclick="document.getElementById('whatsNewModal').style.display='none'" style="background:#0B5CFF;color:#fff;border:none;border-radius:6px;padding:6px 14px;cursor:pointer;font-weight:600;font-size:13px">✕ Close</button>
     </div>
-    <p>Upload the latest <strong>Multi-Currency Global Channel Price List</strong> to refresh all pricing in this tool. Both annual and monthly pricing will be extracted automatically.</p>
-    <div class="drop-zone" id="dropZone" onclick="document.getElementById('fileInput').click()">
-      <div class="icon">📁</div>
-      <div class="text">Drop XLSX or CSV file here or click to browse</div>
-      <div class="subtext">Accepts .xlsx (direct from Seismic/Partner Portal) or .csv export</div>
-      <input type="file" accept=".xlsx,.xls,.csv" style="display:none" id="fileInput" onchange="handleFileUpload(this.files[0])">
+    <div style="font-size:13px;line-height:1.7;color:#333">
+      <h3 style="color:#0B5CFF;font-size:14px;margin:0 0 8px">v1.5.1 — May 20, 2026</h3>
+      <ul style="padding-left:18px;margin-bottom:16px">
+        <li><strong>Disclaimer banner</strong> — Added persistent beta/unofficial tool notice for partner distribution; hidden on print</li>
+      </ul>
+      <h3 style="color:#0B5CFF;font-size:14px;margin:0 0 8px">v1.5.0 — May 18, 2026</h3>
+      <ul style="padding-left:18px;margin-bottom:16px">
+        <li><strong>Enterprise ELA advisory</strong> — Auto-triggers for 250+ users with ZPLS; shows cost comparison, 50:1 Node/ZPLS ratio, savings calc</li>
+        <li><strong>Recommendation fix</strong> — Unlimited Calling selection now correctly drives Enterprise Premier recommendation</li>
+        <li><strong>Alternative plan upgrade pricing</strong> — Shows exact calling add-on SKU, cost, and effective per-user price on alternative cards</li>
+      </ul>
+      <h3 style="color:#0B5CFF;font-size:14px;margin:0 0 8px">v1.4.0</h3>
+      <ul style="padding-left:18px;margin-bottom:16px">
+        <li><strong>Quoting Guide rules</strong> — PAYG auto-included, monthly billing warning, DID warning, no-combine enforcement, Rooms ratios fixed</li>
+        <li><strong>Smart flags</strong> — Enterprise calling add-on advisory, Mesh 20% calc, Frontline requirements</li>
+      </ul>
+      <h3 style="color:#0B5CFF;font-size:14px;margin:0 0 8px">v1.3.x</h3>
+      <ul style="padding-left:18px;margin-bottom:16px">
+        <li><strong>Monthly pricing</strong> — Real monthly SKUs from channel price list (not annual÷12)</li>
+        <li><strong>Dual display</strong> — Unit prices show both /mo and /yr side by side</li>
+        <li><strong>Common Area</strong> — Moved under Phone as a subset</li>
+      </ul>
+      <h3 style="color:#0B5CFF;font-size:14px;margin:0 0 8px">v1.2.0</h3>
+      <ul style="padding-left:18px;margin-bottom:16px">
+        <li><strong>Online Fax (eFax)</strong> — Plan-aware advisory with pooled pages calc</li>
+      </ul>
+      <h3 style="color:#0B5CFF;font-size:14px;margin:0 0 8px">v1.1.0</h3>
+      <ul style="padding-left:18px;margin-bottom:16px">
+        <li><strong>May 2026 pricing</strong> — Updated price list, removed dead Pro Plus regional SKUs</li>
+        <li><strong>ZVA standalone</strong> — Full product with 8 tiers, Voice/Chat per-interaction pricing</li>
+      </ul>
     </div>
-    <div id="uploadStatus" style="margin-top:12px;font-size:12px;color:#666"></div>
-    <div style="margin-top:16px;padding:12px;background:#f7f8fa;border-radius:8px;font-size:12px;color:#666">
-      <strong>Where to get this file:</strong> Download the current month's Multi-Currency Global Channel Price List XLSX from Seismic or the Zoom Partner Portal → Price Lists. Drop the XLSX directly here — no need to convert to CSV.
-    </div>
+    <p style="font-size:11px;color:#999;margin-top:12px;border-top:1px solid #eee;padding-top:12px">Click the version badge in the header anytime to see this changelog.</p>
   </div>
 </div>
-
+<div class="disclaimer-banner">
+  <span class="disc-icon">⚠️</span>
+  <div><strong>Beta Tool — Not an Official Zoom Product.</strong> This configurator is provided as-is for estimation and planning purposes. Pricing and SKU data are sourced from channel price lists available to partners, but may not reflect the latest changes. Please verify all quotes and recommendations with your Zoom account executive or channel manager before use in customer-facing proposals or deal registrations.</div>
+</div>
 <div class="progress-bar" id="progressBar"></div>
 <div class="progress-labels" id="progressLabels"></div>
 <div class="container" id="app"></div>
 <script>
 const STEPS=['Customer Overview','Product Needs','Sizing & Constraints','Review & Confirm'];
 let currentStep=0;
-let formData={customerName:'',opportunityName:'',totalUsers:'',vertical:'General Business',region:'US/Canada',netNew:'Yes',partnerName:'',notes:'',
+let formData={customerName:'',opportunityName:'',totalUsers:'',vertical:'General Business',region:'US/Canada',billingTerm:'Annual',netNew:'Yes',partnerName:'',notes:'',
   meetings:false,phone:false,rooms:false,commonArea:false,phoneType:'',phoneOnly:false,byoc:false,
   webinars:false,zoomEvents:false,zcc:false,zra:false,frontline:false,aiCompanion:false,
   sso:false,workspaceRes:false,visitorMgmt:false,translation:false,msTeams:false,cmk:false,premierSupport:false,
@@ -140,445 +142,102 @@ let formData={customerName:'',opportunityName:'',totalUsers:'',vertical:'General
   didQty:'',powerPackUsers:'',intlCallingUsers:'',
   budget:'Medium',timeline:'Standard (30-90 days)',incumbent:'',
   zpls:false,zplsQty:'',
-  zvaVoice:false,zvaChat:false,zvaMinutes:'',
-  callQueues:false,callRecording:false,regulatedIndustry:false,hybridWorkspace:false,existingHardware:'',
-  porting:false,crmIntegration:'',e911:false,multiSite:false,siteCount:''
+  zva:false,zvaTier:'',zvaVoice:false,zvaChat:false,zvaVoiceVolume:'',zvaChatVolume:'',
+  needsFax:false,
+  callQueues:false,callRecording:false,regulatedIndustry:false,hybridWorkspace:false,existingHardware:''
 };
 
-// === PRICE LIST STATE ===
-let priceListState = {
-  version: "April 1, 2026",
-  source: "Embedded (April 2026)",
-  dateLoaded: new Date("2026-04-01"),
-  hasMonthly: false,
-  skuCount: 0
-};
-
-// === PRICING DATA (April 2026 Channel Price List - Annual MSRP USD) ===
-// Each entry: {sku, annual, monthly, unit}
-// monthly = null means no monthly data available from sheet
+// === PRICING DATA (May 2026 Channel Price List - Annual MSRP USD) ===
 const PRICING = {
   // Workplace Plans (per user/year)
-  "Zoom Workplace Pro":{sku:"PAR1-PRO-BASE-NH1Y",annual:159.90,monthly:null,unit:"user"},
-  "Zoom Workplace Pro Plus US/Canada":{sku:"Z1-PROP-USCA-1-1YR",annual:246.00,monthly:null,unit:"user"},
-  "Zoom Workplace Pro Plus UK/Ireland":{sku:"Z1-PROP-UKI-1-1YR",annual:246.00,monthly:null,unit:"user"},
-  "Zoom Workplace Pro Plus ANZ":{sku:"Z1-PROP-ANZ-1-1YR",annual:246.00,monthly:null,unit:"user"},
-  "Zoom Workplace Pro Plus Japan":{sku:"Z1-PROP-JPN-1-1YR",annual:246.00,monthly:null,unit:"user"},
-  "Zoom Workplace Business":{sku:"PAR1-BIZ-BASE-NH1Y",annual:219.90,monthly:null,unit:"user"},
-  "Zoom Workplace Business Plus US/Canada":{sku:"Z1-BIZP-USCA-1-1YP",annual:294.00,monthly:null,unit:"user"},
-  "Zoom Workplace Business Plus UK/Ireland":{sku:"Z1-BIZP-UKI-1-1YP",annual:294.00,monthly:null,unit:"user"},
-  "Zoom Workplace Business Plus ANZ":{sku:"Z1-BIZP-ANZ-1-1YP",annual:294.00,monthly:null,unit:"user"},
-  "Zoom Workplace Business Plus Japan":{sku:"Z1-BIZP-JPN-1-1YP",annual:294.00,monthly:null,unit:"user"},
-  "Zoom Workplace Business Plus Global Select":{sku:"Z1-BIZP-GS-1-1YP",annual:348.00,monthly:null,unit:"user"},
-  "Zoom Workplace Enterprise Essentials":{sku:"Z1-ESS-1-1YR",annual:220.00,monthly:null,unit:"user"},
-  "Zoom Workplace Enterprise":{sku:"Z1-ENT-10-1YP",annual:220.00,monthly:null,unit:"user"},
-  "Zoom Workplace Enterprise Plus":{sku:"Z1-ENTP-50-1YP",annual:300.00,monthly:null,unit:"user"},
-  "Zoom Workplace Enterprise Premier US/Canada":{sku:"Z1-ENTPR-USCA-50-1YR",annual:350.00,monthly:null,unit:"user"},
-  "Zoom Workplace Enterprise Premier UK/Ireland":{sku:"Z1-ENTPR-UKI-50-1YR",annual:350.00,monthly:null,unit:"user"},
-  "Zoom Workplace Enterprise Premier ANZ":{sku:"Z1-ENTPR-ANZ-50-1YR",annual:350.00,monthly:null,unit:"user"},
-  "Zoom Workplace Enterprise Premier Japan":{sku:"Z1-ENTPR-JP-50-1YR",annual:350.00,monthly:null,unit:"user"},
+  "Zoom Workplace Pro":{sku:"PAR1-PRO-BASE-NH1Y",price:159.90,unit:"user/yr"},
+  "Zoom Workplace Pro Plus US/Canada":{sku:"Z1-PROP-USCA-1-1YR",price:246.00,unit:"user/yr"},
+  "Zoom Workplace Business":{sku:"PAR1-BIZ-BASE-NH1Y",price:219.90,unit:"user/yr"},
+  "Zoom Workplace Business Plus US/Canada":{sku:"Z1-BIZP-USCA-1-1YP",price:294.00,unit:"user/yr"},
+  "Zoom Workplace Business Plus UK/Ireland":{sku:"Z1-BIZP-UKI-1-1YP",price:294.00,unit:"user/yr"},
+  "Zoom Workplace Business Plus ANZ":{sku:"Z1-BIZP-ANZ-1-1YP",price:294.00,unit:"user/yr"},
+  "Zoom Workplace Business Plus Japan":{sku:"Z1-BIZP-JPN-1-1YP",price:294.00,unit:"user/yr"},
+  "Zoom Workplace Business Plus Global Select":{sku:"Z1-BIZP-GS-1-1YP",price:348.00,unit:"user/yr"},
+  "Zoom Workplace Enterprise Essentials":{sku:"Z1-ESS-1-1YR",price:220.00,unit:"user/yr"},
+  "Zoom Workplace Enterprise":{sku:"Z1-ENT-10-1YP",price:220.00,unit:"user/yr"},
+  "Zoom Workplace Enterprise Plus":{sku:"Z1-ENTP-50-1YP",price:300.00,unit:"user/yr"},
+  "Zoom Workplace Enterprise Premier US/Canada":{sku:"Z1-ENTPR-USCA-50-1YR",price:350.00,unit:"user/yr"},
+  "Zoom Workplace Enterprise Premier UK/Ireland":{sku:"Z1-ENTPR-UKI-50-1YR",price:350.00,unit:"user/yr"},
+  "Zoom Workplace Enterprise Premier ANZ":{sku:"Z1-ENTPR-ANZ-50-1YR",price:350.00,unit:"user/yr"},
+  "Zoom Workplace Enterprise Premier Japan":{sku:"Z1-ENTPR-JP-50-1YR",price:350.00,unit:"user/yr"},
   // Phone Standalone
-  "Zoom Phone Pro (Standalone)":{sku:"PAR1-ZPPBX-Pro-1Y",annual:102.00,monthly:null,unit:"user"},
-  "Zoom Phone US/Canada Unlimited":{sku:"ZP-USCA-UN-1-1YP",annual:192.00,monthly:null,unit:"user"},
-  "Zoom Phone UK/Ireland Unlimited":{sku:"ZP-UKI-UN-1-1YP",annual:192.00,monthly:null,unit:"user"},
-  "Zoom Phone ANZ Unlimited":{sku:"PAR1-ZPC-AUNZ-Unlim-1Y",annual:192.00,monthly:null,unit:"user"},
-  "Zoom Phone Japan Unlimited":{sku:"ZP-JPN-UN-1-1YP",annual:192.00,monthly:null,unit:"user"},
-  "Zoom Phone Global Select":{sku:"ZP-GS-UN-1-1YP",annual:264.00,monthly:null,unit:"user"},
-  "Zoom Phone Global Select Metered":{sku:"ZP-GS-MT-1-1YP",annual:198.00,monthly:null,unit:"user"},
-  "Zoom Phone Common Area":{sku:"PAR1-ZP-COMM-1YR",annual:48.00,monthly:null,unit:"device"},
-  // Phone Upgrade Add-on for Workplace
-  "Zoom Phone Upgrade US/Canada":{sku:"Z1-ZP-USCA-UN-1-1YP",annual:84.00,monthly:null,unit:"user"},
-  "Zoom Phone Upgrade UK/Ireland":{sku:"Z1-ZP-UKI-UN-1-1YP",annual:84.00,monthly:null,unit:"user"},
-  "Zoom Phone Upgrade ANZ":{sku:"Z1-ZP-ANZ-UN-1-1YP",annual:84.00,monthly:null,unit:"user"},
-  "Zoom Phone Upgrade Japan":{sku:"Z1-ZP-JPN-UN-1-1YP",annual:84.00,monthly:null,unit:"user"},
-  "Zoom Phone Upgrade Global Select":{sku:"Z1-ZP-GS-UN-1-1YP",annual:144.00,monthly:null,unit:"user"},
+  "Zoom Phone Pro (Standalone)":{sku:"PAR1-ZPPBX-Pro-1Y",price:102.00,unit:"user/yr"},
+  "Zoom Phone US/Canada Unlimited":{sku:"ZP-USCA-UN-1-1YP",price:192.00,unit:"user/yr"},
+  "Zoom Phone UK/Ireland Unlimited":{sku:"ZP-UKI-UN-1-1YP",price:192.00,unit:"user/yr"},
+  "Zoom Phone ANZ Unlimited":{sku:"PAR1-ZPC-AUNZ-Unlim-1Y",price:192.00,unit:"user/yr"},
+  "Zoom Phone Japan Unlimited":{sku:"ZP-JPN-UN-1-1YP",price:192.00,unit:"user/yr"},
+  "Zoom Phone Global Select":{sku:"ZP-GS-UN-1-1YP",price:264.00,unit:"user/yr"},
+  "Zoom Phone Global Select Metered":{sku:"ZP-GS-MT-1-1YP",price:198.00,unit:"user/yr"},
+  "Zoom Phone Common Area":{sku:"PAR1-ZP-COMM-1YR",price:48.00,unit:"device/yr"},
+  // Phone Upgrade Add-on for Workplace (when plan has Phone Pro, upgrade to Unlimited)
+  "Zoom Phone Upgrade US/Canada":{sku:"Z1-ZP-USCA-UN-1-1YP",price:84.00,unit:"user/yr"},
+  "Zoom Phone Upgrade UK/Ireland":{sku:"Z1-ZP-UKI-UN-1-1YP",price:84.00,unit:"user/yr"},
+  "Zoom Phone Upgrade ANZ":{sku:"Z1-ZP-ANZ-UN-1-1YP",price:84.00,unit:"user/yr"},
+  "Zoom Phone Upgrade Japan":{sku:"Z1-ZP-JPN-UN-1-1YP",price:84.00,unit:"user/yr"},
+  "Zoom Phone Upgrade Global Select":{sku:"Z1-ZP-GS-UN-1-1YP",price:144.00,unit:"user/yr"},
   // Phone Add-ons
-  "Zoom Phone Power Pack":{sku:"ZP-PWP-1-1YP",annual:300.00,monthly:null,unit:"user"},
-  "Zoom Phone Intl Unlimited":{sku:"ZP-INT-UN-1-1YP",annual:120.00,monthly:null,unit:"user"},
-  "Additional Phone Number (DID/Toll-Free)":{sku:"ZCX-USCA-VSN-1-1YR",annual:60.00,monthly:null,unit:"number"},
+  "Zoom Phone Power Pack":{sku:"ZP-PWP-1-1YP",price:300.00,unit:"user/yr"},
+  "Zoom Phone Intl Unlimited":{sku:"ZP-INT-UN-1-1YP",price:120.00,unit:"user/yr"},
+  "Additional Phone Number (DID/Toll-Free)":{sku:"ZCX-USCA-VSN-1-1YR",price:60.00,unit:"number/yr"},
   // Rooms & Spaces
-  "Zoom Rooms":{sku:"PAR1-ROOM-BASE-RM1Y",annual:499.00,monthly:null,unit:"room"},
-  "Room Connector":{sku:"PAR1-CRC-1-PT1Y",annual:499.00,monthly:null,unit:"port"},
-  "Workspace Reservation":{sku:"ZM-WR-1-1Y",annual:15.00,monthly:null,unit:"user"},
-  "Visitor Management":{sku:"ZS-VM-1-1YR",annual:20.00,monthly:null,unit:"location"},
+  "Zoom Rooms":{sku:"PAR1-ROOM-BASE-RM1Y",price:499.00,unit:"room/yr"},
+  "Room Connector":{sku:"PAR1-CRC-1-PT1Y",price:499.00,unit:"port/yr"},
+  "Workspace Reservation":{sku:"ZM-WR-1-1Y",price:15.00,unit:"user/yr"},
+  "Visitor Management":{sku:"ZS-VM-1-1YR",price:20.00,unit:"location/yr"},
   // Webinars & Events
-  "Webinar 500":{sku:"PAR1-WEB-500-FL1Y",annual:1000.00,monthly:null,unit:"host"},
-  "Webinar 1000":{sku:"PAR1-WEB-1000-FL1Y",annual:3400.00,monthly:null,unit:"host"},
-  "Webinar 3000":{sku:"PAR1-WEB-3000-FL1Y",annual:9900.00,monthly:null,unit:"host"},
-  "Zoom Events 500 Unlimited":{sku:"ZE-500-UNL-1YR",annual:4990.00,monthly:null,unit:"host"},
-  "Zoom Events PPA":{sku:"ZE-PPA-3-1YR",annual:2.00,monthly:null,unit:"attendee"},
-  "Zoom Webinars Plus 500 Unlimited":{sku:"ZS-500-UNL-1YR",annual:3490.00,monthly:null,unit:"host"},
+  "Webinar 500":{sku:"PAR1-WEB-500-FL1Y",price:1000.00,unit:"host/yr"},
+  "Webinar 1000":{sku:"PAR1-WEB-1000-FL1Y",price:3400.00,unit:"host/yr"},
+  "Webinar 3000":{sku:"PAR1-WEB-3000-FL1Y",price:9900.00,unit:"host/yr"},
+  "Zoom Events 500 Unlimited":{sku:"ZE-500-UNL-1YR",price:4990.00,unit:"host/yr"},
+  "Zoom Events PPA":{sku:"ZE-PPA-3-1YR",price:2.00,unit:"attendee"},
+  "Zoom Webinars Plus 500 Unlimited":{sku:"ZS-500-UNL-1YR",price:3490.00,unit:"host/yr"},
   // Meetings Add-ons
-  "Large Meeting 500":{sku:"PAR1-LMR-500-NH1Y",annual:600.00,monthly:null,unit:"host"},
-  "Large Meeting 1000":{sku:"PAR1-LMR-1K-NH1Y",annual:1490.00,monthly:null,unit:"host"},
-  "Concurrent Meeting Basic":{sku:"PAR1-CMADD-BAS-1Y",annual:96.00,monthly:null,unit:"license"},
-  "Concurrent Meeting Plus":{sku:"PAR1-CMADD-PLUS-1Y",annual:336.00,monthly:null,unit:"license"},
-  "Audio Conferencing":{sku:"PAR1-AUD-UNIT-NH1Y",annual:60.00,monthly:null,unit:"user"},
+  "Large Meeting 500":{sku:"PAR1-LMR-500-NH1Y",price:600.00,unit:"host/yr"},
+  "Large Meeting 1000":{sku:"PAR1-LMR-1K-NH1Y",price:1490.00,unit:"host/yr"},
+  "Concurrent Meeting Basic":{sku:"PAR1-CMADD-BAS-1Y",price:96.00,unit:"license/yr"},
+  "Concurrent Meeting Plus":{sku:"PAR1-CMADD-PLUS-1Y",price:336.00,unit:"license/yr"},
+  "Audio Conferencing":{sku:"PAR1-AUD-UNIT-NH1Y",price:60.00,unit:"user/yr"},
   // AI & Productivity
-  "Custom AI Companion":{sku:"ZM-CAIC-1YR",annual:200.00,monthly:null,unit:"user"},
-  "Zoom Scheduler":{sku:"ZM-SCH-1-1YR",annual:59.90,monthly:null,unit:"user"},
-  "Zoom Clips Plus":{sku:"ZM-CLPS-1-1YR",annual:69.90,monthly:null,unit:"user"},
-  "Zoom Docs":{sku:"ZM-ZD-1YR",annual:89.90,monthly:null,unit:"user"},
+  "Custom AI Companion":{sku:"ZM-CAIC-1YR",price:200.00,unit:"user/yr"},
+  "Zoom Scheduler":{sku:"ZM-SCH-1-1YR",price:59.90,unit:"user/yr"},
+  "Zoom Clips Plus":{sku:"ZM-CLPS-1-1YR",price:69.90,unit:"user/yr"},
+  "Zoom Docs":{sku:"ZM-ZD-1YR",price:89.90,unit:"user/yr"},
   // Security & Compliance
-  "Advanced Management":{sku:"ZM-AM-1YR",annual:48.00,monthly:null,unit:"user"},
-  "Compliance Manager (Theta Lake)":{sku:"ZM-ZCM-1-1YR",annual:72.00,monthly:null,unit:"user"},
-  "Compliance Manager Plus":{sku:"ZM-ZCMP-1-1YR",annual:144.00,monthly:null,unit:"user"},
-  "Customer Managed Key":{sku:"ZM-CMK-1-1Y",annual:40.00,monthly:null,unit:"user"},
-  "Translated Captions":{sku:"ZM-TC-1-1Y",annual:50.00,monthly:null,unit:"user"},
+  "Advanced Management":{sku:"ZM-AM-1YR",price:48.00,unit:"user/yr"},
+  "Compliance Manager (Theta Lake)":{sku:"ZM-ZCM-1-1YR",price:72.00,unit:"user/yr"},
+  "Compliance Manager Plus":{sku:"ZM-ZCMP-1-1YR",price:144.00,unit:"user/yr"},
+  "Customer Managed Key":{sku:"ZM-CMK-1-1Y",price:40.00,unit:"user/yr"},
+  "Translated Captions":{sku:"ZM-TC-1-1Y",price:50.00,unit:"user/yr"},
   // Network & Infrastructure
-  "Zoom Mesh for Meetings":{sku:"ZM-MM-1YR",annual:3.60,monthly:null,unit:"user"},
-  "Zoom Mesh for Events":{sku:"ZM-MS-1-1Y",annual:3.00,monthly:null,unit:"attendee"},
-  "Zoom Enhanced Media":{sku:"ZM-EM-1YR",annual:240.00,monthly:null,unit:"user"},
-  // Zoom Node / Phone Hybrid (ZPLS)
-  "Zoom Node (base)":{sku:"ZM-ZN-1-1Y",annual:0.00,monthly:null,unit:"node"},
-  "Zoom Phone Hybrid (ZPLS)":{sku:"ZN-ZP-HB-1-1YP",annual:4000.00,monthly:null,unit:"node"},
-  "Zoom Meeting Hybrid":{sku:"ZM-ZN-ZMH-1Y",annual:7600.00,monthly:null,unit:"node"},
-  "Zoom Node Hybrid Recording":{sku:"ZM-ZN-HR-1Y",annual:7600.00,monthly:null,unit:"node"},
+  "Zoom Mesh for Meetings":{sku:"ZM-MM-1YR",price:3.60,unit:"user/yr"},
+  "Zoom Mesh for Events":{sku:"ZM-MS-1-1Y",price:3.00,unit:"attendee/yr"},
+  "Zoom Enhanced Media":{sku:"ZM-EM-1YR",price:240.00,unit:"user/yr"},
+  // Zoom Node / Phone Hybrid (ZPLS - Local Survivability)
+  "Zoom Node (base)":{sku:"ZM-ZN-1-1Y",price:0.00,unit:"node/yr"},
+  "Zoom Phone Hybrid (ZPLS)":{sku:"ZN-ZP-HB-1-1YP",price:4000.00,unit:"node/yr"},
+  "Zoom Meeting Hybrid":{sku:"ZM-ZN-ZMH-1Y",price:7600.00,unit:"node/yr"},
+  "Zoom Node Hybrid Recording":{sku:"ZM-ZN-HR-1Y",price:7600.00,unit:"node/yr"},
   // ZRA
-  "ZRA + Phone US/CA Unlimited":{sku:"ZP-ZRA-USCA-UN-1YR",annual:696.00,monthly:null,unit:"user"},
-  "Zoom Auto Dialer US/Canada":{sku:"ZP-AD-USCA-1YR",annual:1908.00,monthly:null,unit:"user"},
-  // ZVA (consumption-based)
-  "ZVA for Voice":{sku:"ZCX-ZVA-VOICE",annual:0.25,monthly:null,unit:"minute"},
-  "ZVA for Chat":{sku:"ZCX-ZVA-CHAT",annual:0.40,monthly:null,unit:"resolution"}
+  "ZRA + Phone US/CA Unlimited":{sku:"ZP-ZRA-USCA-UN-1YR",price:696.00,unit:"user/yr"},
+  "Zoom Phone PAYG":{sku:"ZP-PAYG-RCR",price:0.00,unit:"account/yr"},
+  "Zoom Auto Dialer US/Canada":{sku:"ZP-AD-USCA-1YR",price:1908.00,unit:"user/yr"},
+  // Zoom Virtual Agent (ZVA) - Standalone (May 2026 - separated from ZCC)
+  "ZVA Tier 1 (up to 5K sessions/mo)":{sku:"ZCX-ZVA-1-1YR",price:45000.00,unit:"platform/yr"},
+  "ZVA Tier 2 (up to 10K sessions/mo)":{sku:"ZCX-ZVA-2-1YR",price:75000.00,unit:"platform/yr"},
+  "ZVA Tier 3 (up to 20K sessions/mo)":{sku:"ZCX-ZVA-3-1YR",price:110000.00,unit:"platform/yr"},
+  "ZVA Tier 4 (up to 35K sessions/mo)":{sku:"ZCX-ZVA-4-1YR",price:155000.00,unit:"platform/yr"},
+  "ZVA Tier 5 (up to 50K sessions/mo)":{sku:"ZCX-ZVA-5-1YR",price:220000.00,unit:"platform/yr"},
+  "ZVA Tier 6 (up to 100K sessions/mo)":{sku:"ZCX-ZVA-6-1YR",price:350000.00,unit:"platform/yr"},
+  "ZVA Tier 7 (up to 200K sessions/mo)":{sku:"ZCX-ZVA-7-1YR",price:495000.00,unit:"platform/yr"},
+  "ZVA Tier 8 (200K+ sessions/mo)":{sku:"ZCX-ZVA-8-1YR",price:650000.00,unit:"platform/yr"},
+  "ZVA for Voice (per interaction)":{sku:"ZCX-ZVAV-1-1YR",price:0.25,unit:"interaction"},
+  "ZVA for Chat (per interaction)":{sku:"ZCX-ZVAC-1-1YR",price:0.40,unit:"interaction"}
 };
-
-// === CSV PARSING ENGINE ===
-// Parses the Multi-Currency Global Channel Price List CSV
-// Matches SKUs to update PRICING with real monthly values from the sheet
-
-function parseCSVLine(line) {
-  const result = [];
-  let current = '';
-  let inQuotes = false;
-  for (let i = 0; i < line.length; i++) {
-    const ch = line[i];
-    if (ch === '"') { inQuotes = !inQuotes; }
-    else if (ch === ',' && !inQuotes) { result.push(current.trim()); current = ''; }
-    else { current += ch; }
-  }
-  result.push(current.trim());
-  return result;
-}
-
-function parsePriceListCSV(csvText) {
-  const lines = csvText.split('\n').filter(l => l.trim());
-  if (lines.length < 3) return { success: false, error: 'CSV too short - only ' + lines.length + ' lines found' };
-
-  // Detect price list date from first few rows
-  let dateMatch = null;
-  for (let i = 0; i < Math.min(5, lines.length); i++) {
-    const m = lines[i].match(/(January|February|March|April|May|June|July|August|September|October|November|December)\s+\d{1,2},?\s+\d{4}/i);
-    if (m) { dateMatch = m; break; }
-  }
-  const version = dateMatch ? dateMatch[0] : 'Unknown';
-
-  // Find header row - look for a row that contains 'SKU' as a cell value
-  let headerIdx = -1;
-  for (let i = 0; i < Math.min(10, lines.length); i++) {
-    const row = parseCSVLine(lines[i]);
-    // Check if any cell contains 'SKU' (exact or close match)
-    const hasSKU = row.some(cell => cell.trim().toUpperCase() === 'SKU');
-    const hasMSRP = row.some(cell => cell.toUpperCase().includes('MSRP'));
-    const hasProduct = row.some(cell => cell.toLowerCase().includes('product') || cell.toLowerCase().includes('rate plan'));
-    if (hasSKU && (hasMSRP || hasProduct)) { headerIdx = i; break; }
-  }
-  if (headerIdx === -1) {
-    // Fallback: try line 1 (common structure: title on line 0, header on line 1)
-    headerIdx = 1;
-  }
-
-  const header = parseCSVLine(lines[headerIdx]);
-  // Find key column indices with flexible matching
-  const colSKU = header.findIndex(h => h.trim().toUpperCase() === 'SKU');
-  const colName = header.findIndex(h => h.toLowerCase().includes('rate plan'));
-  const colMSRP = header.findIndex(h => h.toUpperCase().includes('MSRP') && h.toUpperCase().includes('USD'));
-  const colBilling = header.findIndex(h => h.toLowerCase().includes('billing') && h.toLowerCase().includes('freq'));
-  const colFamily = header.findIndex(h => h.toLowerCase().includes('product family'));
-
-  // If we can't find MSRP (USD) specifically, look for any MSRP column
-  const colMSRPFallback = colMSRP === -1 ? header.findIndex(h => h.toUpperCase().includes('MSRP')) : colMSRP;
-  const finalMSRP = colMSRP !== -1 ? colMSRP : colMSRPFallback;
-
-  if (colSKU === -1 || finalMSRP === -1) {
-    const debugInfo = 'Header row ' + headerIdx + ': [' + header.slice(0,8).join(', ') + '...]';
-    return { success: false, error: 'Cannot find SKU or MSRP columns. ' + debugInfo };
-  }
-  const colMSRPFinal = finalMSRP;
-
-  // Parse all data rows
-  let skuCount = 0;
-  let monthlyFound = 0;
-  const skuMap = {}; // sku -> {annual, monthly, name}
-
-  for (let i = headerIdx + 1; i < lines.length; i++) {
-    const row = parseCSVLine(lines[i]);
-    const sku = (row[colSKU] || '').trim();
-    const name = colName >= 0 ? (row[colName] || '').trim() : '';
-    const msrp = parseFloat(row[colMSRPFinal]) || 0;
-    const billing = colBilling >= 0 ? (row[colBilling] || '').trim() : '';
-
-    if (!sku || !msrp) continue;
-    skuCount++;
-
-    // Determine if this is annual or monthly based on:
-    // 1. Billing Frequency column
-    // 2. Rate plan name containing 'Monthly' or 'Annual'
-    // 3. SKU suffix patterns (1Y/1YR/1YP = annual)
-    const isMonthly = billing.toLowerCase() === 'monthly' ||
-                      name.toLowerCase().includes('monthly') ||
-                      (billing === '' && !name.toLowerCase().includes('annual') && !name.toLowerCase().includes('prepay') &&
-                       !sku.match(/1Y[RP]?$|NH1Y|FL1Y|1YR$/));
-
-    if (!skuMap[sku]) skuMap[sku] = { annual: null, monthly: null, name: name };
-
-    if (isMonthly) {
-      skuMap[sku].monthly = msrp;
-      monthlyFound++;
-    } else if (billing.toLowerCase() === 'annual' || name.toLowerCase().includes('annual') || sku.match(/1Y[RP]?$|NH1Y|FL1Y|1YR$/)) {
-      skuMap[sku].annual = msrp;
-    }
-  }
-
-  // Also build a lookup by normalized name for matching
-  const nameMap = {};
-  for (let i = headerIdx + 1; i < lines.length; i++) {
-    const row = parseCSVLine(lines[i]);
-    const sku = (row[colSKU] || '').trim();
-    const name = colName >= 0 ? (row[colName] || '').trim() : '';
-    const msrp = parseFloat(row[colMSRPFinal]) || 0;
-    const billing = colBilling >= 0 ? (row[colBilling] || '').trim() : '';
-    if (!name || !msrp) continue;
-
-    const normName = name.toLowerCase().replace(/\s+(annual|monthly|one year|two year|three year|prepay)/gi, '').trim();
-    if (!nameMap[normName]) nameMap[normName] = { annual: null, monthly: null, sku: sku };
-
-    const isMonthly = billing.toLowerCase() === 'monthly' || name.toLowerCase().includes('monthly');
-    if (isMonthly) nameMap[normName].monthly = msrp;
-    else if (billing.toLowerCase() === 'annual' || name.toLowerCase().includes('annual')) nameMap[normName].annual = msrp;
-  }
-
-  // Update PRICING object with data from CSV
-  let updated = 0;
-  for (const key in PRICING) {
-    const entry = PRICING[key];
-    const skuData = skuMap[entry.sku];
-    if (skuData) {
-      if (skuData.annual) { entry.annual = skuData.annual; updated++; }
-      if (skuData.monthly !== null) { entry.monthly = skuData.monthly; }
-    }
-  }
-
-  // Update state
-  priceListState.version = version;
-  priceListState.source = 'Uploaded CSV (' + version + ')';
-  priceListState.dateLoaded = dateMatch ? new Date(dateMatch[0]) : new Date();
-  priceListState.hasMonthly = monthlyFound > 0;
-  priceListState.skuCount = skuCount;
-
-  return {
-    success: true,
-    version: version,
-    skuCount: skuCount,
-    monthlyFound: monthlyFound,
-    updated: updated,
-    hasMonthly: monthlyFound > 0
-  };
-}
-
-// === FILE UPLOAD HANDLERS ===
-function showUploadModal() {
-  document.getElementById('uploadModal').classList.add('visible');
-}
-function closeUploadModal() {
-  document.getElementById('uploadModal').classList.remove('visible');
-}
-
-function handleFileUpload(file) {
-  if (!file) return;
-  const status = document.getElementById('uploadStatus');
-  status.textContent = 'Reading file...';
-  status.style.color = '#666';
-
-  const fileName = file.name.toLowerCase();
-  const fileType = (file.type || '').toLowerCase();
-  const isXLSX = fileName.endsWith('.xlsx') || fileName.endsWith('.xls') ||
-                 fileType.includes('spreadsheet') || fileType.includes('excel') ||
-                 fileType === 'application/vnd.openxmlformats-officedocument.spreadsheetml.sheet';
-
-  // Check if SheetJS is available for XLSX files
-  if (isXLSX && typeof XLSX === 'undefined') {
-    // Try loading SheetJS on demand
-    status.innerHTML = `<span style="color:#666">Loading XLSX parser...</span>`;
-    const script = document.createElement('script');
-    script.src = 'https://cdn.sheetjs.com/xlsx-0.20.3/package/dist/xlsx.full.min.js';
-    script.onload = function() { handleFileUpload(file); }; // retry after load
-    script.onerror = function() {
-      status.innerHTML = `<span style="color:#c00">❌ Cannot load XLSX parser (no internet or CDN blocked).</span><br>` +
-        `<span style="color:#666"><strong>Workaround:</strong> Open the XLSX in Excel → File → Save As → select "CSV (Comma delimited)" → upload that CSV here.</span>`;
-    };
-    document.head.appendChild(script);
-    return;
-  }
-
-  const reader = new FileReader();
-  reader.onload = function(e) {
-    let csvText;
-
-    if (isXLSX) {
-      // Parse XLSX using SheetJS
-      try {
-        const data = new Uint8Array(e.target.result);
-        const workbook = XLSX.read(data, { type: 'array' });
-
-        // Show available sheets
-        console.log('Available sheets:', workbook.SheetNames);
-        status.textContent = `Found ${workbook.SheetNames.length} sheets: ${workbook.SheetNames.join(', ')}. Parsing...`;
-
-        // Find the pricing sheet - look for "Multi-Currency" or "Prices" in sheet names
-        let sheetName = workbook.SheetNames.find(s =>
-          s.toLowerCase().includes('multi-currency') ||
-          s.toLowerCase().includes('prices') ||
-          s.toLowerCase().includes('price list')
-        );
-        // Fallback to first sheet if no match
-        if (!sheetName) sheetName = workbook.SheetNames[0];
-
-        const worksheet = workbook.Sheets[sheetName];
-        csvText = XLSX.utils.sheet_to_csv(worksheet);
-
-        // Verify we got actual CSV data, not binary
-        if (csvText.length < 100 || csvText.includes('\x00')) {
-          status.innerHTML = `<span style="color:#c00">❌ Sheet "${sheetName}" appears empty or corrupt. Try a different sheet.</span><br>` +
-            `<span style="color:#666">Available sheets: ${workbook.SheetNames.join(', ')}</span>`;
-          return;
-        }
-      } catch (err) {
-        status.innerHTML = `<span style="color:#c00">❌ Error reading XLSX: ${err.message}</span><br>` +
-          `<span style="color:#666">Try saving as CSV from Excel and uploading that instead.</span>`;
-        return;
-      }
-    } else {
-      // CSV - use text directly
-      csvText = e.target.result;
-      // Check if this is actually binary (XLSX read as text by mistake)
-      if (csvText.charCodeAt(0) > 127 || csvText.substring(0,2) === 'PK' || csvText.includes('\x00')) {
-        // This is binary - try to re-read as XLSX
-        if (typeof XLSX !== 'undefined') {
-          status.textContent = 'Detected binary file, re-reading as XLSX...';
-          const reader2 = new FileReader();
-          reader2.onload = function(e2) {
-            try {
-              const data = new Uint8Array(e2.target.result);
-              const workbook = XLSX.read(data, { type: 'array' });
-              let sheetName = workbook.SheetNames.find(s =>
-                s.toLowerCase().includes('multi-currency') || s.toLowerCase().includes('prices') || s.toLowerCase().includes('price list')
-              ) || workbook.SheetNames[0];
-              const worksheet = workbook.Sheets[sheetName];
-              const csv2 = XLSX.utils.sheet_to_csv(worksheet);
-              const result = parsePriceListCSV(csv2);
-              if (result.success) {
-                status.innerHTML = `<span style="color:#2DB87D">✅ <strong>Loaded: ${result.version}</strong></span><br>${result.skuCount} SKUs | ${result.updated} updated` + (result.hasMonthly ? ` | <strong>${result.monthlyFound} monthly prices</strong>` : '');
-                document.getElementById('priceListLabel').textContent = result.version.split(',')[0].replace(/\s+\d{4}/, '') + ' ' + (result.version.match(/\d{4}/) || [''])[0];
-                document.getElementById('stalenessBanner').classList.remove('visible');
-                if (currentStep === 4) render();
-                setTimeout(closeUploadModal, 2500);
-              } else { status.innerHTML = `<span style="color:#c00">❌ ${result.error}</span>`; }
-            } catch(err) { status.innerHTML = `<span style="color:#c00">❌ Error: ${err.message}</span>`; }
-          };
-          reader2.readAsArrayBuffer(file);
-          return;
-        } else {
-          status.innerHTML = `<span style="color:#c00">❌ This is an XLSX file but the parser hasn't loaded yet. Please wait a moment and try again, or save as CSV from Excel.</span>`;
-          return;
-        }
-      }
-    }
-
-    const result = parsePriceListCSV(csvText);
-
-    if (result.success) {
-      status.innerHTML = `<span style="color:#2DB87D">✅ <strong>Loaded: ${result.version}</strong></span><br>` +
-        `${result.skuCount} SKUs parsed | ${result.updated} prices updated` +
-        (result.hasMonthly ? ` | <strong>${result.monthlyFound} monthly prices found</strong>` : ' | No monthly pricing detected in this file') +
-        (isXLSX ? '<br><span style="color:#666;font-size:11px">Parsed from XLSX directly</span>' : '');
-
-      // Update UI
-      document.getElementById('priceListLabel').textContent = result.version.split(',')[0].replace(/\s+\d{4}/, '') + ' ' + (result.version.match(/\d{4}/) || [''])[0];
-      document.getElementById('stalenessBanner').classList.remove('visible');
-
-      // Re-render if on results page
-      if (currentStep === 4) render();
-
-      // Close modal after 2.5s
-      setTimeout(closeUploadModal, 2500);
-    } else {
-      status.innerHTML = `<span style="color:#c00">❌ Error: ${result.error}</span>`;
-    }
-  };
-
-  // Read as ArrayBuffer for XLSX, as text for CSV
-  if (isXLSX) {
-    reader.readAsArrayBuffer(file);
-  } else {
-    reader.readAsText(file);
-  }
-}
-
-// Drag and drop
-document.addEventListener('DOMContentLoaded', function() {
-  const dz = document.getElementById('dropZone');
-  if (dz) {
-    dz.addEventListener('dragover', function(e) { e.preventDefault(); dz.classList.add('dragover'); });
-    dz.addEventListener('dragleave', function() { dz.classList.remove('dragover'); });
-    dz.addEventListener('drop', function(e) { e.preventDefault(); dz.classList.remove('dragover'); handleFileUpload(e.dataTransfer.files[0]); });
-  }
-});
-
-// Staleness check on load
-function checkStaleness() {
-  const now = new Date();
-  const diffDays = Math.floor((now - priceListState.dateLoaded) / (1000 * 60 * 60 * 24));
-  if (diffDays > 35) {
-    const banner = document.getElementById('stalenessBanner');
-    const msg = document.getElementById('stalenessMsg');
-    msg.textContent = `Embedded data is from ${priceListState.version}. Upload the latest CSV to refresh.`;
-    banner.classList.add('visible');
-  }
-}
-setTimeout(checkStaleness, 500);
-
-// === PRICING DISPLAY HELPERS ===
-function fmt$(n){return '$'+Number(n).toFixed(2).replace(/\B(?=(\d{3})+(?!\d))/g,',')}
-
-function getPrice(entry) {
-  // Returns {annual, monthly, hasMonthly}
-  if (!entry) return {annual:0, monthly:null, hasMonthly:false};
-  return {
-    annual: entry.annual || 0,
-    monthly: entry.monthly,
-    hasMonthly: entry.monthly !== null
-  };
-}
-
-function fmtPrice(entry) {
-  // Format price display: shows annual, and monthly if available from sheet
-  const p = getPrice(entry);
-  let display = fmt$(p.annual) + '/yr';
-  if (p.hasMonthly) {
-    display += ' <span class="price-monthly">(' + fmt$(p.monthly) + '/mo)</span>';
-  }
-  return display;
-}
-
-function fmtLineTotal(annualPrice, qty, monthlyPrice) {
-  let display = fmt$(annualPrice * qty) + '/yr';
-  if (monthlyPrice !== null && monthlyPrice !== undefined) {
-    display += ' <span class="price-monthly">(' + fmt$(monthlyPrice * qty) + '/mo)</span>';
-  }
-  return display;
-}
-
-function fmtTotal(price,qty){return fmt$(price*qty)+'/yr'}
 
 const PLANS = [
 {name:"Zoom Workplace Pro",tier:"Pro",channel_eligible:true,min_quantity:1,meeting_capacity:100,features:{ai_companion:true,sso_branding:false,workspace_reservation:false,visitor_management:false,translation:false,webinars:null,zoom_rooms:null,customer_managed_key:false,premier_support:false},phone_included:{phone_pro:false,unlimited_regional:false,powerpack:false,common_area:false,ms_teams:false},best_for:"SMB, 1-9 users, basic Meetings + collaboration"},
@@ -588,18 +247,98 @@ const PLANS = [
 {name:"Zoom Workplace Enterprise Essentials",tier:"Enterprise",channel_eligible:true,min_quantity:50,meeting_capacity:500,features:{ai_companion:true,sso_branding:true,workspace_reservation:true,visitor_management:true,translation:true,webinars:"Webinar 500",zoom_rooms:"Bundle(25):Room(1)",customer_managed_key:false,premier_support:false},phone_included:{phone_pro:false,unlimited_regional:false,powerpack:false,common_area:false,ms_teams:false},best_for:"Enterprise 50+, Webinar 500 + Rooms ratio, no phone"},
 {name:"Zoom Workplace Enterprise",tier:"Enterprise",channel_eligible:true,min_quantity:10,meeting_capacity:500,features:{ai_companion:true,sso_branding:true,workspace_reservation:false,visitor_management:false,translation:false,webinars:"Webinar 500",zoom_rooms:null,customer_managed_key:false,premier_support:false},phone_included:{phone_pro:true,unlimited_regional:false,powerpack:false,common_area:false,ms_teams:false},best_for:"Enterprise, Phone Pro included, Webinar 500"},
 {name:"Zoom Workplace Enterprise Plus",tier:"Enterprise",channel_eligible:true,min_quantity:50,meeting_capacity:1000,features:{ai_companion:true,sso_branding:true,workspace_reservation:true,visitor_management:true,translation:true,webinars:"Webinar Plus 1000",zoom_rooms:"Bundle(1):Room(1)",customer_managed_key:true,premier_support:false,ms_teams:true,powerpack:true,common_area:true},phone_included:{phone_pro:true,unlimited_regional:false,powerpack:true,common_area:true,ms_teams:true},best_for:"Large Enterprise: 1000-cap, Rooms 1:1, CMK, MS Teams"},
-{name:"Zoom Workplace Enterprise Premier",tier:"Enterprise",channel_eligible:true,min_quantity:50,meeting_capacity:1000,features:{ai_companion:true,sso_branding:true,workspace_reservation:true,visitor_management:true,translation:true,webinars:"Webinar Plus 1000",zoom_rooms:"Bundle(1):Room(1)",customer_managed_key:false,premier_support:true,mesh:true},phone_included:{phone_pro:true,unlimited_regional:true,powerpack:true,common_area:true,ms_teams:false},best_for:"Top-tier: Unlimited Phone, Mesh, Premier Support"}
+{name:"Zoom Workplace Enterprise Premier",tier:"Enterprise",channel_eligible:true,min_quantity:50,meeting_capacity:1000,features:{ai_companion:true,sso_branding:true,workspace_reservation:true,visitor_management:true,translation:true,webinars:"Webinar Plus 1000",zoom_rooms:"Bundle(25):Room(1)",customer_managed_key:false,premier_support:true,mesh:true},phone_included:{phone_pro:true,unlimited_regional:true,powerpack:true,common_area:true,ms_teams:false},best_for:"Top-tier: Unlimited Phone, Mesh, Premier Support"}
 ];
 
 const PHONE_ONLY_PLANS = [
-{name:"Zoom Phone Pro (Metered)",region:"any",sku:"PAR1-ZPPBX-Pro-1Y",annual:102.00,monthly:null,channel_eligible:true,best_for:"Metered calling, BYOC, or international-only use cases"},
-{name:"Zoom Phone US/Canada Unlimited",region:"US/Canada",sku:"ZP-USCA-UN-1-1YP",annual:192.00,monthly:null,channel_eligible:true,best_for:"US/Canada unlimited domestic calling"},
-{name:"Zoom Phone UK/Ireland Unlimited",region:"UK/Ireland",sku:"ZP-UKI-UN-1-1YP",annual:192.00,monthly:null,channel_eligible:true,best_for:"UK/Ireland unlimited domestic calling"},
-{name:"Zoom Phone ANZ Unlimited",region:"Australia/New Zealand",sku:"PAR1-ZPC-AUNZ-Unlim-1Y",annual:192.00,monthly:null,channel_eligible:true,best_for:"Australia/NZ unlimited domestic calling"},
-{name:"Zoom Phone Japan Unlimited",region:"Japan",sku:"ZP-JPN-UN-1-1YP",annual:192.00,monthly:null,channel_eligible:true,best_for:"Japan unlimited domestic calling"},
-{name:"Zoom Phone Global Select",region:"Global/Multi-Region",sku:"ZP-GS-UN-1-1YP",annual:264.00,monthly:null,channel_eligible:true,best_for:"Multi-country unlimited calling (40+ countries)"},
-{name:"Zoom Phone Global Select Metered",region:"Global/Multi-Region",sku:"ZP-GS-MT-1-1YP",annual:198.00,monthly:null,channel_eligible:true,best_for:"Global presence with metered calling"}
+{name:"Zoom Phone Pro (Metered)",region:"any",sku:"PAR1-ZPPBX-Pro-1Y",price:102.00,channel_eligible:true,best_for:"Metered calling, BYOC, or international-only use cases"},
+{name:"Zoom Phone US/Canada Unlimited",region:"US/Canada",sku:"ZP-USCA-UN-1-1YP",price:192.00,channel_eligible:true,best_for:"US/Canada unlimited domestic calling"},
+{name:"Zoom Phone UK/Ireland Unlimited",region:"UK/Ireland",sku:"ZP-UKI-UN-1-1YP",price:192.00,channel_eligible:true,best_for:"UK/Ireland unlimited domestic calling"},
+{name:"Zoom Phone ANZ Unlimited",region:"Australia/New Zealand",sku:"PAR1-ZPC-AUNZ-Unlim-1Y",price:192.00,channel_eligible:true,best_for:"Australia/NZ unlimited domestic calling"},
+{name:"Zoom Phone Japan Unlimited",region:"Japan",sku:"ZP-JPN-UN-1-1YP",price:192.00,channel_eligible:true,best_for:"Japan unlimited domestic calling"},
+{name:"Zoom Phone Global Select",region:"Global/Multi-Region",sku:"ZP-GS-UN-1-1YP",price:264.00,channel_eligible:true,best_for:"Multi-country unlimited calling (40+ countries)"},
+{name:"Zoom Phone Global Select Metered",region:"Global/Multi-Region",sku:"ZP-GS-MT-1-1YP",price:198.00,channel_eligible:true,best_for:"Global presence with metered calling"}
 ];
+
+// === MONTHLY PRICING DATA (May 2026 Channel Price List - Monthly MSRP USD) ===
+// These are REAL monthly SKUs from the price list, NOT annual/12
+const MONTHLY_PRICING = {
+  // Workplace Plans (per user/month)
+  "Zoom Workplace Pro":{sku:"PAR1-PRO-BASE-NH1M",price:15.99,unit:"user/mo"},
+  "Zoom Workplace Pro Plus US/Canada":{sku:"Z1-PROP-USCA-1-MTH",price:24.00,unit:"user/mo"},
+  "Zoom Workplace Business":{sku:"PAR1-BIZ-BASE-NH1M",price:21.99,unit:"user/mo"},
+  "Zoom Workplace Business Plus US/Canada":{sku:"Z1-BIZP-USCA-1-MO",price:29.00,unit:"user/mo"},
+  "Zoom Workplace Business Plus UK/Ireland":{sku:"Z1-BIZP-UKI-1-MO",price:29.00,unit:"user/mo"},
+  "Zoom Workplace Business Plus ANZ":{sku:"Z1-BIZP-ANZ-1-MO",price:29.00,unit:"user/mo"},
+  "Zoom Workplace Business Plus Japan":{sku:"Z1-BIZP-JPN-1-MO",price:26.99,unit:"user/mo"},
+  "Zoom Workplace Business Plus Global Select":{sku:"Z1-BIZP-GS-1-MTH",price:34.00,unit:"user/mo"},
+  "Zoom Workplace Enterprise Essentials":{sku:"Z1-ESS-1-MO",price:22.00,unit:"user/mo"},
+  "Zoom Workplace Enterprise":{sku:"Z1-ENT-10-MO",price:22.00,unit:"user/mo"},
+  "Zoom Workplace Enterprise Plus":{sku:"Z1-ENTP-50-MO",price:30.00,unit:"user/mo"},
+  "Zoom Workplace Enterprise Premier US/Canada":{sku:"Z1-ENTPR-USCA-50-MTH",price:35.00,unit:"user/mo"},
+  "Zoom Workplace Enterprise Premier UK/Ireland":{sku:"Z1-ENTPR-UKI-50-MTH",price:35.00,unit:"user/mo"},
+  "Zoom Workplace Enterprise Premier ANZ":{sku:"Z1-ENTPR-ANZ-50-MTH",price:35.00,unit:"user/mo"},
+  "Zoom Workplace Enterprise Premier Japan":{sku:"Z1-ENTPR-JP-50-MTH",price:35.00,unit:"user/mo"},
+  // Phone Standalone (per user/month)
+  "Zoom Phone Pro (Standalone)":{sku:"ZP-PRO-1-MTH",price:10.00,unit:"user/mo"},
+  "Zoom Phone US/Canada Unlimited":{sku:"ZP-USCA-UN-1-MTH",price:18.00,unit:"user/mo"},
+  "Zoom Phone UK/Ireland Unlimited":{sku:"ZP-UKI-UN-1-MTH",price:18.00,unit:"user/mo"},
+  "Zoom Phone ANZ Unlimited":{sku:"PAR1-ZPC-AUNZ-UNLIM-MTH",price:18.00,unit:"user/mo"},
+  "Zoom Phone Japan Unlimited":{sku:"ZP-JPN-UN-1-MTH",price:18.00,unit:"user/mo"},
+  "Zoom Phone Global Select":{sku:"ZP-GS-UN-1-MTH",price:25.00,unit:"user/mo"},
+  "Zoom Phone Global Select Metered":{sku:"ZP-GS-MT-1-MTH",price:18.00,unit:"user/mo"},
+  "Zoom Phone Common Area":{sku:"ZP-CAP-1-MTH",price:4.00,unit:"device/mo"},
+  // Phone Upgrade Add-on (per user/month)
+  "Zoom Phone Upgrade US/Canada":{sku:"Z1-ZP-USCA-UN-1-MTH",price:7.00,unit:"user/mo"},
+  "Zoom Phone Upgrade UK/Ireland":{sku:"Z1-ZP-UKI-UN-1-MTH",price:7.00,unit:"user/mo"},
+  "Zoom Phone Upgrade ANZ":{sku:"Z1-ZP-ANZ-UN-1-MTH",price:7.00,unit:"user/mo"},
+  "Zoom Phone Upgrade Japan":{sku:"Z1-ZP-JPN-UN-1-MTH",price:7.00,unit:"user/mo"},
+  "Zoom Phone Upgrade Global Select":{sku:"Z1-ZP-GS-UN-1-MTH",price:12.00,unit:"user/mo"},
+  // Phone Add-ons
+  "Zoom Phone Power Pack":{sku:"ZP-PWP-1-MTH",price:25.00,unit:"user/mo"},
+  "Zoom Phone Intl Unlimited":{sku:"ZP-INT-UN-1-MTH",price:10.00,unit:"user/mo"},
+  // Rooms & Spaces
+  "Zoom Rooms":{sku:"PAR1-ROOM-BASE-RM1M",price:49.00,unit:"room/mo"},
+  "Workspace Reservation":{sku:"ZM-WR-1-MO",price:1.50,unit:"user/mo"},
+  "Visitor Management":{sku:"ZS-VM-1-MTH",price:2.00,unit:"location/mo"},
+  // Webinars
+  "Webinar 500":{sku:"PAR1-WEB-500-FL1M",price:129.00,unit:"host/mo"},
+  "Webinar 1000":{sku:"PAR1-WEB-1000-FL1M",price:340.00,unit:"host/mo"},
+  "Webinar 3000":{sku:"PAR1-WEB-3000-FL1M",price:990.00,unit:"host/mo"},
+  "Zoom Events 500 Unlimited":{sku:"ZE-500-UNL-MO",price:499.00,unit:"host/mo"},
+  // Meetings Add-ons
+  "Large Meeting 500":{sku:"PAR1-LMR-500-NH1M",price:50.00,unit:"host/mo"},
+  "Large Meeting 1000":{sku:"PAR1-LMR-1K-NH1M",price:149.00,unit:"host/mo"},
+  "Concurrent Meeting Basic":{sku:"PAR1-CMADD-BAS-1M",price:8.00,unit:"license/mo"},
+  "Concurrent Meeting Plus":{sku:"PAR1-CMADD-PLUS-1M",price:28.00,unit:"license/mo"},
+  "Audio Conferencing":{sku:"PAR1-AUD-UNIT-NH1M",price:5.00,unit:"user/mo"},
+  // AI & Productivity
+  "Custom AI Companion":{sku:"ZM-CAIC-MTH",price:20.00,unit:"user/mo"},
+  "Zoom Scheduler":{sku:"ZM-SCH-1-MO",price:5.99,unit:"user/mo"},
+  "Zoom Clips Plus":{sku:"ZM-CLPS-1-MTH",price:6.99,unit:"user/mo"},
+  "Zoom Docs":{sku:"ZM-ZD-MTH",price:8.99,unit:"user/mo"},
+  // Security & Compliance
+  "Advanced Management":{sku:"ZM-AM-MTH",price:4.00,unit:"user/mo"},
+  "Compliance Manager (Theta Lake)":{sku:"ZM-ZCM-1-MTH",price:6.00,unit:"user/mo"},
+  "Compliance Manager Plus":{sku:"ZM-ZCMP-1-MTH",price:12.00,unit:"user/mo"},
+  "Customer Managed Key":{sku:"ZM-CMK-1-MO",price:4.00,unit:"user/mo"},
+  "Translated Captions":{sku:"ZM-TC-1-MO",price:5.00,unit:"user/mo"},
+  // Network & Infrastructure
+  "Zoom Mesh for Meetings":{sku:"ZM-MM-MTH",price:0.30,unit:"user/mo"},
+  "Zoom Mesh for Events":{sku:"ZM-MS-1-MO",price:0.25,unit:"attendee/mo"},
+  "Zoom Enhanced Media":{sku:"ZM-EM-MTH",price:25.00,unit:"user/mo"},
+  // Zoom Node / Phone Hybrid (ZPLS)
+  "Zoom Node (base)":{sku:"ZM-ZN-1-MO",price:0.00,unit:"node/mo"},
+  "Zoom Phone Hybrid (ZPLS)":{sku:"ZN-ZP-HB-1-MTH",price:400.00,unit:"node/mo"},
+  "Zoom Meeting Hybrid":{sku:"ZM-ZN-ZMH-MTH",price:760.00,unit:"node/mo"},
+  "Zoom Node Hybrid Recording":{sku:"ZM-ZN-HR-MTH",price:760.00,unit:"node/mo"},
+  // ZRA
+  "ZRA + Phone US/CA Unlimited":{sku:"ZP-ZRA-USCA-UN-1-MTH",price:69.00,unit:"user/mo"},
+  "Zoom Auto Dialer US/Canada":{sku:"ZP-AD-USCA-MTH",price:189.00,unit:"user/mo"}
+};
+
+function fmt$(n){return '$'+Number(n).toFixed(2).replace(/\B(?=(\d{3})+(?!\d))/g,',')}
+function fmtTotal(price,qty){return fmt$(price*qty)+'/yr'}
 
 function renderProgress(){
   let bar='',labels='';
@@ -626,6 +365,7 @@ function renderStep1(){
   <div class="form-group"><label>Total Named Users *</label><input type="number" id="totalUsers" value="${formData.totalUsers}" min="1" placeholder="Total headcount needing licenses"></div>
   <div class="form-group"><label>Customer Vertical</label><select id="vertical">${['General Business','Healthcare','Education','Government','Financial Services','Retail/Hospitality','Legal','Manufacturing','Technology','Other'].map(v=>`<option ${formData.vertical===v?'selected':''}>${v}</option>`).join('')}</select></div>
   <div class="form-group"><label>Selling Region</label><select id="region">${['US/Canada','UK/Ireland','Australia/New Zealand','Japan','Global/Multi-Region','Other'].map(v=>`<option ${formData.region===v?'selected':''}>${v}</option>`).join('')}</select></div>
+  <div class="form-group"><label>Billing Term</label><select id="billingTerm">${['Annual','Monthly'].map(v=>`<option ${formData.billingTerm===v?'selected':''}>${v}</option>`).join('')}</select></div>
   <div class="form-group"><label>Net-new Zoom customer?</label><select id="netNew">${['Yes','No','Partial migration'].map(v=>`<option ${formData.netNew===v?'selected':''}>${v}</option>`).join('')}</select></div>
   <div class="form-group"><label>Partner Company Name</label><input type="text" id="partnerName" value="${esc(formData.partnerName)}" placeholder="Optional"></div>
   <div class="form-group"><label>Notes</label><textarea id="notes" placeholder="Any additional context...">${esc(formData.notes)}</textarea></div>
@@ -635,120 +375,80 @@ function renderStep1(){
 function renderStep2(){
   const chk=(id,label,hint)=>`<label class="checkbox-item ${formData[id]?'checked':''}"><input type="checkbox" ${formData[id]?'checked':''} data-field="${id}"><span><span style="font-size:13px">${label}</span>${hint?'<br><span style="font-size:11px;color:#888">'+hint+'</span>':''}</span></label>`;
   const phoneOpts=['US/Canada Unlimited Calling','UK/Ireland Unlimited Calling','Australia/New Zealand Unlimited Calling','Japan Unlimited Calling','Metered/PAYG Calling (Zoom Phone Pro)','Global Select (multi-country unlimited)'];
-  
-  // === PHONE SECTION (with nested sub-items) ===
   let phoneSection='';
   if(formData.phone){
-    phoneSection=`<div class="conditional">
-    <h3>📞 Calling Plan</h3>
-    <div class="radio-group">${phoneOpts.map(o=>`<label class="radio-item ${formData.phoneType===o?'checked':''}"><input type="radio" name="phoneType" value="${o}" ${formData.phoneType===o?'checked':''}> ${o}</label>`).join('')}</div>
-    
-    <div class="callout callout-blue" style="margin-top:12px;font-size:12px">
-      <strong>💡 Discovery Tip:</strong> Ask the customer: <em>"Will you use Zoom-native numbers or bring your own carrier (BYOC)? Do you need number porting from an existing provider?"</em>
+    phoneSection=`<div class="conditional"><h3>Phone Calling Type</h3><div class="radio-group">${phoneOpts.map(o=>`<label class="radio-item ${formData.phoneType===o?'checked':''}"><input type="radio" name="phoneType" value="${o}" ${formData.phoneType===o?'checked':''}> ${o}</label>`).join('')}
     </div>
-    
-    <h3 style="margin-top:16px">📱 Phone Devices & Locations</h3>
+    <h3 style="margin-top:14px">Phone Add-ons</h3>
     <div class="checkbox-grid">
-      ${chk('commonArea','Common Area Phones','$48/device/yr — Lobby, breakroom, shared spaces (subset of Phone)')}
-      ${chk('multiSite','Multi-Site Deployment','Multiple offices — each site may need its own auto-attendant, E911, and potentially ZPLS')}
-    </div>
-    
-    <h3 style="margin-top:16px">🔌 Phone Add-ons</h3>
-    <div class="checkbox-grid">
-      ${chk('powerPack','Power Pack (Customer Engagement Pack)','$300/user/yr — Call queue analytics, team SMS, wallboards, VIP delegation')}
+      ${chk('commonArea','Common Area Phones','Lobby, breakroom, shared devices — $48/device/yr or $4/device/mo')}
+      ${chk('powerPack','Power Pack (Customer Engagement Pack)','$300/user/yr — Call queue analytics, team SMS, VIP delegation')}
       ${chk('intlCalling','International Calling Add-on','$120/user/yr — Unlimited intl calling to 15+ countries')}
-      ${chk('additionalDID','Additional Phone Numbers (DID/Toll-Free)','$60/number/yr — Extra inbound numbers beyond user licenses')}
-      ${chk('zpls','Phone Local Survivability (ZPLS)','$4,000/node/yr — On-prem failover if internet goes down (Zoom Node)')}
+      ${chk('additionalDID','Additional Phone Numbers (DID/Toll-Free)','$60/number/yr — Extra inbound numbers')}
+      ${chk('zpls','Phone Local Survivability (ZPLS / Phone Hybrid)','$4,000/node/yr — On-prem failover if internet goes down')}
     </div>
-    
-    <h3 style="margin-top:16px">🤖 AI Voice & Virtual Agent</h3>
+    <h3 style="margin-top:14px">Phone Discovery</h3>
     <div class="checkbox-grid">
-      ${chk('zvaVoice','Zoom Virtual Agent for Voice (ZVA)','$0.25/min — Generative AI voice bot, call routing, self-service resolution')}
-      ${chk('zvaChat','Zoom Virtual Agent for Chat (ZVA Chat)','$0.40/resolution — AI chatbot for digital self-service')}
+      ${chk('callQueues','Needs Call Queues / Auto-Attendant / IVR','Multi-line routing, shared line groups, ring groups')}
+      ${chk('callRecording','Needs Call Recording / Compliance Recording','Automatic recording, legal hold, retention policies')}
+      ${chk('needsFax','Customer Needs Fax Capabilities (eFax)','Online fax included with most Phone plans — see advisory in output')}
     </div>
-    ${(formData.zvaVoice||formData.zvaChat)?`<div class="callout callout-amber" style="margin-top:8px;font-size:12px"><strong>⚠️ ZCX Authorization Required:</strong> ZVA requires ZCX Authorized Partner status. Confirm partner authorization before quoting. Pricing is consumption-based (per-minute/resolution), not per-user.</div>`:''}
-    
-    <h3 style="margin-top:16px">🔍 Phone Discovery Questions</h3>
-    <p style="font-size:12px;color:#666;margin-bottom:8px"><em>Check items that apply — these generate recommendations in the output.</em></p>
-    <div class="checkbox-grid">
-      ${chk('callQueues','Call Queues / Auto-Attendant / IVR needed','Ring groups, shared line groups, routing logic, business hours')}
-      ${chk('callRecording','Call Recording / Compliance Recording','Automatic recording, legal hold, retention policies (SEC 17a-4)')}
-      ${chk('porting','Number Porting Required','Moving existing numbers from another carrier')}
-      ${chk('e911','E911 Configuration Needed','Emergency address setup for all sites (required for US)')}
-    </div>
-    
-    <div class="callout callout-blue" style="margin-top:12px;font-size:12px">
-      <strong>💡 Ask the customer:</strong><br>
-      • <em>"Do you have call queues today? How many agents handle inbound calls?"</em><br>
-      • <em>"Are there compliance recording requirements (financial services, healthcare)?"</em><br>
-      • <em>"How many physical locations need their own auto-attendant or site configuration?"</em><br>
-      • <em>"What desk phones or headsets are currently in use? Are they Zoom-certified?"</em>
-    </div>
-    
-    <div style="margin-top:12px">${chk('byoc','BYOC — Bring Your Own Carrier (SIP Trunk / Direct Routing)','Customer keeps existing PSTN provider, routes through Zoom')}</div>
-    <div style="margin-top:8px">${chk('phoneOnly','Phone ONLY — no Zoom Meetings/Workplace needed','')}</div>
+    <div style="margin-top:12px">${chk('byoc','Need PSTN / Direct Routing (bring your own carrier)','')}</div>
+    <div style="margin-top:8px">${chk('phoneOnly','Phone ONLY — customer does NOT need Zoom Meetings/Workplace','')}</div>
     ${formData.phoneOnly?'<div class="callout callout-blue" style="margin-top:8px"><strong>Phone-Only Mode:</strong> Will recommend standalone Zoom Phone plans without a Workplace base license.</div>':''}
     </div>`;
   }
-
-  return `<div class="card"><h2>Step 2: Product Needs</h2>
-  <p style="color:#666;margin-bottom:8px">What does this customer need? <em>(Check all that apply)</em></p>
-  <div style="margin-bottom:16px"><button class="btn btn-secondary" onclick="showPlanComparison()" style="font-size:12px;padding:6px 14px">&#128200; Compare Plans Side-by-Side (see what's included in each bundle)</button></div>
-  
-  <h3>Core Workspace</h3>
-  <div class="checkbox-grid">
+  return `<div class="card"><h2>Step 2: Product Needs</h2><p style="color:#666;margin-bottom:8px">What does this customer need? <em>(Check all that apply)</em></p>
+  <div style="margin-bottom:16px"><button class="btn btn-secondary" onclick="showPlanComparison()" style="font-size:12px;padding:6px 14px">&#128200; Compare Plans Side-by-Side (see what's included)</button></div>
+  ${parseInt(formData.totalUsers)>=50?'<div class="callout callout-amber" style="margin-bottom:16px;font-size:12px"><strong>⚠️ Quoting Rule:</strong> Enterprise Plus and Enterprise Premier <strong>cannot be combined</strong> with other Workplace base plans on the same account. Business and Business Plus <em>can</em> be mixed.</div>':''}
+  ${formData.billingTerm==='Monthly'?'<div class="callout callout-amber" style="margin-bottom:16px;font-size:12px"><strong>⚠️ Monthly Billing:</strong> Monthly billing requires <strong>Zoom approval</strong> and an executed monthly billing agreement. Confirm eligibility with your Zoom AE before quoting monthly terms.</div>':''}
+  <h3>Core Workspace</h3><div class="checkbox-grid">
     ${chk('meetings','Zoom Meetings','Video conferencing & collaboration')}
-    ${chk('phone','Zoom Phone','Cloud PBX, calling, SMS, voicemail')}
-    ${chk('rooms','Zoom Rooms','Conference room video hardware/software')}
+    ${chk('phone','Zoom Phone','Cloud PBX, calling, SMS')}
+    ${chk('rooms','Zoom Rooms','Conference room hardware/software')}
   </div>
   ${phoneSection}
   <hr class="section-divider">
-  
-  <h3>Events & Webinars</h3>
-  <div class="checkbox-grid">
+  <h3>Events & Webinars</h3><div class="checkbox-grid">
     ${chk('webinars','Webinars (one-to-many broadcasts)','Webinar 500/1000/3000 — single-session events')}
     ${chk('zoomEvents','Zoom Events (full event platform)','Multi-session, expo, networking, registration')}
   </div>
   <hr class="section-divider">
-  
-  <h3>Contact Center & Revenue</h3>
-  <div class="checkbox-grid">
+  <h3>Contact Center & Revenue</h3><div class="checkbox-grid">
     ${chk('zcc','Zoom Contact Center (ZCC)','Omnichannel: voice, chat, email, video, social')}
+    ${chk('zva','Zoom Virtual Agent (ZVA)','Standalone AI virtual agent — digital, voice, and chat channels')}
     ${chk('zra','Zoom Revenue Accelerator','Conversation intelligence + auto dialer')}
     ${chk('frontline','Frontline Workers','Mobile-first, shift scheduling, PTT')}
   </div>
-  ${formData.zcc?`<div class="callout callout-blue" style="margin-top:8px;font-size:12px"><strong>💡 ZCC Discovery:</strong> Ask: <em>"How many concurrent agents? What channels (voice, chat, email, social)? Do you need Workforce Management or Quality Management?"</em></div>`:''}
+  ${formData.zva?`<div class="conditional"><h3>ZVA Configuration</h3>
+    <div class="form-group"><label>ZVA Digital Tier (monthly session volume)</label><select id="zvaTier" onchange="formData.zvaTier=this.value">${['Tier 1 (up to 5K sessions/mo)','Tier 2 (up to 10K sessions/mo)','Tier 3 (up to 20K sessions/mo)','Tier 4 (up to 35K sessions/mo)','Tier 5 (up to 50K sessions/mo)','Tier 6 (up to 100K sessions/mo)','Tier 7 (up to 200K sessions/mo)','Tier 8 (200K+ sessions/mo)'].map(v=>'<option '+(formData.zvaTier===v?'selected':'')+'>'+v+'</option>').join('')}</select></div>
+    <div class="checkbox-grid">
+      ${chk('zvaVoice','ZVA for Voice','$0.25/interaction — Voice-based virtual agent')}
+      ${chk('zvaChat','ZVA for Chat','$0.40/interaction — Chat-based virtual agent')}
+    </div>
+    <div class="callout callout-blue" style="margin-top:8px"><strong>Note:</strong> ZVA is now a standalone product family (May 2026) — separate deal registration from ZCC. Volume-based pricing with tiered discounts.</div>
+  </div>`:''}
   <hr class="section-divider">
-  
-  <h3>AI & Productivity</h3>
-  <div class="checkbox-grid">
+  <h3>AI & Productivity</h3><div class="checkbox-grid">
     ${chk('aiCompanion','AI Companion 3.0 (included in all plans)','Meeting summaries, chat drafting, smart compose')}
-    ${chk('scheduler','Zoom Scheduler','$59.90/user/yr — Appointment booking pages')}
-    ${chk('clipsPlus','Zoom Clips Plus','$69.90/user/yr — Async video messaging')}
+    ${chk('scheduler','Zoom Scheduler','Appointment booking pages — $59.90/user/yr')}
+    ${chk('clipsPlus','Zoom Clips Plus','Async video messaging — $69.90/user/yr')}
   </div>
   <hr class="section-divider">
-  
-  <h3>Spaces & Workspace</h3>
-  <div class="checkbox-grid">
-    ${chk('workspaceRes','Workspace Reservation (Hot Desking)','$15/user/yr — Desk/room booking, floor maps, kiosks')}
+  <h3>Spaces & Workspace</h3><div class="checkbox-grid">
+    ${chk('workspaceRes','Workspace Reservation (Hot Desking)','$15/user/yr — Desk/room booking, floor maps')}
     ${chk('visitorMgmt','Visitor Management','$20/location/yr — Lobby check-in, badge printing')}
   </div>
-  ${formData.hybridWorkspace||formData.workspaceRes?`<div class="callout callout-blue" style="margin-top:8px;font-size:12px"><strong>💡 Ask:</strong> <em>"How many floors/buildings? Do you need digital signage or wayfinding? What's the desk-to-employee ratio?"</em></div>`:''}
   <hr class="section-divider">
-  
-  <h3>Security, Compliance & Governance</h3>
-  <div class="checkbox-grid">
+  <h3>Security, Compliance & Governance</h3><div class="checkbox-grid">
     ${chk('sso','SSO / Managed Domains / Branding','Included in Business+ plans')}
     ${chk('cmk','Customer Managed Key (CMK)','$40/user/yr — Encryption key control')}
     ${chk('advMgmt','Advanced Management','$48/user/yr — DLP, info barriers, archiving for non-licensed users')}
     ${chk('complianceMgr','Compliance Manager (Theta Lake)','$72/user/yr — eDiscovery, legal hold, risk detection')}
-    ${chk('regulatedIndustry','Regulated Industry (HIPAA, FINRA, SEC, etc.)','Flags compliance requirements in output')}
+    ${chk('regulatedIndustry','Regulated Industry (HIPAA, FINRA, etc.)','Flags compliance requirements in output')}
   </div>
-  ${formData.regulatedIndustry?`<div class="callout callout-amber" style="margin-top:8px;font-size:12px"><strong>⚠️ Compliance Alert:</strong> Ask: <em>"Do you need message archiving (SEC 17a-4)? Compliance recording? Legal hold? What retention policies are required?"</em> Consider Compliance Manager + CMK + Advanced Management.</div>`:''}
   <hr class="section-divider">
-  
-  <h3>Network & Infrastructure</h3>
-  <div class="checkbox-grid">
+  <h3>Network & Infrastructure</h3><div class="checkbox-grid">
     ${chk('zoomMesh','Zoom Mesh','$3.60/user/yr — Bandwidth optimization (up to 60% reduction)')}
     ${chk('msTeams','MS Teams Integration','Direct Routing / Teams interop')}
     ${chk('translation','Live Translation (Translated Captions)','$50/user/yr — Real-time meeting translation')}
@@ -757,27 +457,22 @@ function renderStep2(){
     ${chk('premierSupport','Premier Support','Dedicated TAM, 24/7 priority support')}
   </div>
   <hr class="section-divider">
-  
-  <h3>Environment & Integration Discovery</h3>
+  <h3>Workspace & Environment Discovery</h3>
   <div class="checkbox-grid">
-    ${chk('hybridWorkspace','Hybrid/Flexible Workspace','Hot desking, shared spaces, multiple offices')}
+    ${chk('hybridWorkspace','Hybrid/Flexible Workspace (hot desking, shared spaces)','Triggers Workspace Reservation + Visitor Mgmt recommendations')}
   </div>
-  <div class="form-group" style="margin-top:12px"><label>Existing hardware/phones to keep or replace? <a href="https://www.zoom.com/en/hardware" target="_blank" style="font-size:11px;color:#0B5CFF">(View Zoom Certified Hardware →)</a></label><input type="text" id="existingHardware" value="${esc(formData.existingHardware)}" placeholder="e.g., Polycom VVX, Cisco 8800, Yealink T46S, none"></div>
-  <div class="form-group"><label>CRM or business tool integrations needed?</label><input type="text" id="crmIntegration" value="${esc(formData.crmIntegration)}" placeholder="e.g., Salesforce, HubSpot, ServiceNow, Bullhorn, none"></div>
-  
+  <div class="form-group" style="margin-top:12px"><label>Existing hardware/phones to keep or replace?</label><input type="text" id="existingHardware" value="${esc(formData.existingHardware)}" placeholder="e.g., Polycom VVX, Cisco 8800, Yealink T46S, none"></div>
   <div class="btn-row"><button class="btn btn-secondary" onclick="prevStep()">&larr; Back</button><button class="btn btn-primary" onclick="nextStep()">Continue &rarr;</button></div></div>`;
 }
 
 function renderStep3(){
   let fields='';
   if(formData.phone) fields+=`<div class="form-group"><label>How many users need Zoom Phone?</label><input type="number" id="phoneUsers" value="${formData.phoneUsers}" min="1"></div>`;
-  if(formData.multiSite) fields+=`<div class="form-group"><label>How many sites/locations?</label><input type="number" id="siteCount" value="${formData.siteCount}" min="1" placeholder="Each site gets its own auto-attendant/emergency address"></div>`;
   if(formData.powerPack) fields+=`<div class="form-group"><label>How many users need Power Pack?</label><input type="number" id="powerPackUsers" value="${formData.powerPackUsers}" min="1" placeholder="Usually call center supervisors / queue managers"></div>`;
   if(formData.intlCalling) fields+=`<div class="form-group"><label>How many users need International Calling?</label><input type="number" id="intlCallingUsers" value="${formData.intlCallingUsers}" min="1"></div>`;
   if(formData.additionalDID) fields+=`<div class="form-group"><label>How many additional phone numbers (DID/Toll-Free)?</label><input type="number" id="didQty" value="${formData.didQty}" min="1"></div>`;
   if(formData.zpls) fields+=`<div class="form-group"><label>How many ZPLS nodes (sites needing local survivability)?</label><input type="number" id="zplsQty" value="${formData.zplsQty}" min="1" placeholder="1 node per site/location"></div>`;
-  if(formData.zvaVoice||formData.zvaChat) fields+=`<div class="form-group"><label>Estimated monthly minutes/resolutions for ZVA?</label><input type="number" id="zvaMinutes" value="${formData.zvaMinutes}" min="1" placeholder="e.g., 10000 minutes/month"></div>`;
-  if(formData.commonArea) fields+=`<div class="form-group"><label>How many Common Area phone devices?</label><input type="number" id="commonAreaQty" value="${formData.commonAreaQty}" min="1" placeholder="Lobby phones, breakroom, elevator, etc."></div>`;
+  if(formData.commonArea) fields+=`<div class="form-group"><label>How many Common Area licenses?</label><input type="number" id="commonAreaQty" value="${formData.commonAreaQty}" min="1"></div>`;
   if(formData.rooms) fields+=`<div class="form-group"><label>How many Zoom Rooms?</label><input type="number" id="roomsQty" value="${formData.roomsQty}" min="1"></div>`;
   if(formData.webinars){
     fields+=`<div class="form-group"><label>How many Webinar hosts?</label><input type="number" id="webinarHosts" value="${formData.webinarHosts}" min="1"></div>`;
@@ -787,11 +482,13 @@ function renderStep3(){
     fields+=`<div class="form-group"><label>Zoom Events pricing model</label><select id="eventModel">${['Pay Per Attendee','Unlimited (500 attendees)','Not sure yet'].map(v=>`<option ${formData.eventModel===v?'selected':''}>${v}</option>`).join('')}</select></div>`;
     fields+=`<div class="form-group"><label>Expected attendees per event</label><input type="number" id="eventAttendees" value="${formData.eventAttendees}" min="1" placeholder="e.g., 500"></div>`;
   }
+  if(formData.zvaVoice) fields+=`<div class="form-group"><label>Estimated monthly ZVA Voice interactions</label><input type="number" id="zvaVoiceVolume" value="${formData.zvaVoiceVolume}" min="1" placeholder="e.g., 10000"></div>`;
+  if(formData.zvaChat) fields+=`<div class="form-group"><label>Estimated monthly ZVA Chat interactions</label><input type="number" id="zvaChatVolume" value="${formData.zvaChatVolume}" min="1" placeholder="e.g., 25000"></div>`;
   return `<div class="card"><h2>Step 3: Sizing & Constraints</h2>
   ${fields||'<p style="color:#666">No quantity-specific items selected. Proceed to review.</p>'}
   <div class="form-group"><label>Budget Sensitivity</label><select id="budget">${['Low (prioritize value)','Medium','High (prioritize features)'].map(v=>`<option ${formData.budget===v?'selected':''}>${v}</option>`).join('')}</select></div>
   <div class="form-group"><label>Deployment Timeline</label><select id="timeline">${['ASAP (< 30 days)','Standard (30-90 days)','Planning phase (90+ days)'].map(v=>`<option ${formData.timeline===v?'selected':''}>${v}</option>`).join('')}</select></div>
-  <div class="form-group"><label>Current incumbent to displace?</label><input type="text" id="incumbent" value="${esc(formData.incumbent)}" placeholder="e.g., Microsoft Teams, RingCentral, Cisco, Avaya, Mitel, 8x8"></div>
+  <div class="form-group"><label>Current incumbent to displace?</label><input type="text" id="incumbent" value="${esc(formData.incumbent)}" placeholder="e.g., Microsoft Teams, RingCentral, Cisco, Avaya, Mitel"></div>
   <div class="btn-row"><button class="btn btn-secondary" onclick="prevStep()">&larr; Back</button><button class="btn btn-primary" onclick="nextStep()">Continue &rarr;</button></div></div>`;
 }
 
@@ -801,34 +498,36 @@ function renderStep4(){
   if(formData.meetings) products.push('Meetings');
   if(formData.phone) products.push(formData.phoneOnly?'Phone ONLY':'Phone');
   if(formData.phoneType) products.push(formData.phoneType.split('(')[0].trim());
-  if(formData.commonArea) products.push('Common Area');
   if(formData.powerPack) products.push('Power Pack');
   if(formData.intlCalling) products.push('Intl Calling');
-  if(formData.zvaVoice) products.push('ZVA Voice');
-  if(formData.zvaChat) products.push('ZVA Chat');
-  if(formData.zpls) products.push('ZPLS');
   if(formData.rooms) products.push('Rooms');
+  if(formData.commonArea) products.push('Common Area');
   if(formData.webinars) products.push('Webinars');
   if(formData.zoomEvents) products.push('Zoom Events');
   if(formData.zcc) products.push('Contact Center');
+  if(formData.zva) products.push('Virtual Agent (ZVA)');
+  if(formData.zvaVoice) products.push('ZVA Voice');
+  if(formData.zvaChat) products.push('ZVA Chat');
   if(formData.zra) products.push('Revenue Accelerator');
   if(formData.frontline) products.push('Frontline');
   if(formData.aiCompanion) products.push('AI Companion');
   if(formData.scheduler) products.push('Scheduler');
   if(formData.clipsPlus) products.push('Clips Plus');
   if(formData.sso) products.push('SSO/Branding');
-  if(formData.workspaceRes) products.push('Workspace Res');
+  if(formData.workspaceRes) products.push('Workspace Reservation');
   if(formData.visitorMgmt) products.push('Visitor Mgmt');
   if(formData.translation) products.push('Translation');
   if(formData.msTeams) products.push('MS Teams');
   if(formData.cmk) products.push('CMK');
-  if(formData.advMgmt) products.push('Adv Mgmt');
+  if(formData.advMgmt) products.push('Advanced Mgmt');
   if(formData.complianceMgr) products.push('Compliance Mgr');
   if(formData.zoomMesh) products.push('Mesh');
   if(formData.audioConf) products.push('Audio Conf');
   if(formData.concurrentMtg) products.push('Concurrent Mtg');
   if(formData.premierSupport) products.push('Premier Support');
   if(formData.additionalDID) products.push('Add\'l DIDs');
+  if(formData.zpls) products.push('ZPLS (Phone Hybrid)');
+  if(formData.needsFax) products.push('Online Fax (eFax)');
   return `<div class="card"><h2>Step 4: Review & Confirm</h2>
   <div class="summary-grid">
     <div class="summary-item"><div class="label">Customer</div><div class="value">${esc(formData.customerName)||'—'}</div></div>
@@ -842,20 +541,25 @@ function renderStep4(){
   </div>
   <h3 style="margin-top:20px">Selected Products & Add-ons (${products.length})</h3>
   <div style="display:flex;flex-wrap:wrap;gap:6px;margin-top:8px">${products.map(p=>`<span class="badge badge-blue">${p}</span>`).join('')||'<span style="color:#999">None selected</span>'}</div>
-  ${formData.phone?`<p style="margin-top:12px;font-size:13px"><strong>Phone users:</strong> ${formData.phoneUsers||'—'}${formData.multiSite?' | <strong>Sites:</strong> '+(formData.siteCount||'—'):''}</p>`:''}
-  ${formData.commonArea?`<p style="font-size:13px"><strong>Common Area devices:</strong> ${formData.commonAreaQty||'—'}</p>`:''}
+  ${formData.phone?`<p style="margin-top:12px;font-size:13px"><strong>Phone users:</strong> ${formData.phoneUsers||'—'}</p>`:''}
+  ${formData.commonArea?`<p style="font-size:13px"><strong>Common Area:</strong> ${formData.commonAreaQty||'—'}</p>`:''}
   ${formData.rooms?`<p style="font-size:13px"><strong>Rooms:</strong> ${formData.roomsQty||'—'}</p>`:''}
   ${formData.webinars?`<p style="font-size:13px"><strong>Webinar hosts:</strong> ${formData.webinarHosts||'—'} (audience: ${formData.webinarAudience})</p>`:''}
   ${formData.zoomEvents?`<p style="font-size:13px"><strong>Events:</strong> ${formData.eventModel} (${formData.eventAttendees||'—'} attendees)</p>`:''}
-  ${formData.zvaVoice?`<p style="font-size:13px"><strong>ZVA Voice est. minutes:</strong> ${formData.zvaMinutes||'TBD'}/month</p>`:''}
-  ${formData.regulatedIndustry?'<div class="callout callout-amber" style="margin-top:8px">⚠️ <strong>Regulated Industry</strong> — Compliance Manager, CMK, and Advanced Management may be required.</div>':''}
-  ${formData.porting?'<div class="callout callout-blue" style="margin-top:8px">📋 <strong>Number Porting flagged</strong> — Coordinate with Zoom porting team. Allow 2-4 weeks for port completion.</div>':''}
-  ${formData.crmIntegration?`<p style="font-size:13px"><strong>Integrations:</strong> ${esc(formData.crmIntegration)}</p>`:''}
+  ${formData.zva?`<p style="font-size:13px"><strong>ZVA:</strong> ${formData.zvaTier||'Tier TBD'}${formData.zvaVoice?' + Voice':''}${formData.zvaChat?' + Chat':''}</p>`:''}
+  ${formData.regulatedIndustry?'<div class="callout callout-amber" style="margin-top:8px">⚠️ <strong>Regulated Industry flagged</strong> — Compliance Manager, CMK, and Advanced Management may be required.</div>':''}
   ${formData.incumbent?`<p style="font-size:13px"><strong>Displacing:</strong> ${esc(formData.incumbent)}</p>`:''}
   ${formData.existingHardware?`<p style="font-size:13px"><strong>Existing hardware:</strong> ${esc(formData.existingHardware)}</p>`:''}
   ${formData.notes?`<p style="font-size:13px;margin-top:8px"><strong>Notes:</strong> ${esc(formData.notes)}</p>`:''}
   <div class="btn-row"><button class="btn btn-secondary" onclick="prevStep()">&larr; Back</button><button class="btn btn-success" onclick="generateConfig()">&#9889; Generate Configuration</button></div></div>`;
 }
+function getActivePricing(key){
+  if(formData.billingTerm==='Monthly'&&MONTHLY_PRICING[key]) return MONTHLY_PRICING[key];
+  return PRICING[key]||null;
+}
+function getPeriodLabel(){return formData.billingTerm==='Monthly'?'/mo':'/yr';}
+function getMultiplier(){return formData.billingTerm==='Monthly'?1:1;} // qty * price, period shown in label
+
 
 function getPhoneOnlyRecommendation(){
   const region=formData.region;
@@ -888,19 +592,38 @@ function getRecommendation(){
     else{rec=PLANS[2];why='300-cap meetings, SSO/branding, Unlimited Whiteboard for mid-market.';alts.push(PLANS[3]);}
   } else if(n<250){
     if(needsWebinar1000||needsRooms11||needsCMK||needsMSTeams){rec=PLANS[6];why='1000-cap meetings, Webinar Plus 1000, Rooms 1:1, CMK, MS Teams.';alts.push(PLANS[7]);}
-    else if(formData.webinars&&formData.rooms){rec=PLANS[4];why='Webinar 500 + Rooms (25:1 ratio) for enterprise.';alts.push(PLANS[6]);}
     else if(needsPhone&&unlimited&&needsPremier){rec=PLANS[7];why='Unlimited Phone, Mesh, Premier Support — top-tier.';alts.push(PLANS[6]);}
-    else if(needsPhone){rec=PLANS[5];why='Enterprise with Phone Pro, Webinar 500, 500-cap meetings.';alts.push(PLANS[6]);}
+    else if(needsPhone&&unlimited){rec=PLANS[7];why='Enterprise Premier includes Unlimited Regional Calling bundled in. Enterprise/Enterprise Plus only include Phone Pro and would require a separate Unlimited Calling add-on at additional cost.';alts.push(PLANS[6]);alts.push(PLANS[3]);}
+    else if(formData.webinars&&formData.rooms){rec=PLANS[4];why='Webinar 500 + Rooms (25:1 ratio) for enterprise.';alts.push(PLANS[6]);}
+    else if(needsPhone){rec=PLANS[5];why='Enterprise with Phone Pro included. Add Unlimited Calling add-on if needed later.';alts.push(PLANS[6]);}
     else{rec=PLANS[5];why='Enterprise-grade meetings (500 cap), Webinar 500, Phone Pro included.';alts.push(PLANS[4]);}
   } else {
     if(needsPhone&&unlimited&&needsPremier){rec=PLANS[7];why='Unlimited Phone, Mesh, Premier Support, 1000-cap meetings.';alts.push(PLANS[6]);}
+    else if(needsPhone&&unlimited){rec=PLANS[7];why='Enterprise Premier includes Unlimited Regional Calling bundled in. Enterprise Plus only includes Phone Pro (metered) and would require a separate Unlimited Calling add-on.';alts.push(PLANS[6]);}
     else if(needsCMK||needsMSTeams||needsWebinar1000){rec=PLANS[6];why='1000-cap meetings, CMK, MS Teams, Webinar Plus 1000, Rooms 1:1.';alts.push(PLANS[7]);}
+    else if(needsPhone){rec=PLANS[6];why='Enterprise Plus with Phone Pro included. Add Unlimited Calling add-on if needed.';alts.push(PLANS[7]);alts.push(PLANS[5]);}
     else{rec=PLANS[6];why='Enterprise Plus is the default for 250+ users — comprehensive feature set.';alts.push(PLANS[7]);alts.push(PLANS[5]);}
   }
   return {rec,why,alts};
 }
 
 function getPricingKey(plan,region){
+  // If monthly billing, try MONTHLY_PRICING first
+  if(formData.billingTerm==='Monthly'){
+    const r=region||formData.region;
+    const regionSuffix={'US/Canada':'US/Canada','UK/Ireland':'UK/Ireland','Australia/New Zealand':'ANZ','Japan':'Japan','Global/Multi-Region':'Global Select'};
+    const rs=regionSuffix[r]||'US/Canada';
+    if(MONTHLY_PRICING[plan.name]) return MONTHLY_PRICING[plan.name];
+    const withRegion=plan.name+' '+rs;
+    if(MONTHLY_PRICING[withRegion]) return MONTHLY_PRICING[withRegion];
+    if(plan.name.includes('Pro Plus')) return MONTHLY_PRICING['Zoom Workplace Pro Plus '+rs]||MONTHLY_PRICING['Zoom Workplace Pro Plus US/Canada'];
+    if(plan.name.includes('Business Plus')) return MONTHLY_PRICING['Zoom Workplace Business Plus '+rs]||MONTHLY_PRICING['Zoom Workplace Business Plus US/Canada'];
+    if(plan.name.includes('Enterprise Premier')) return MONTHLY_PRICING['Zoom Workplace Enterprise Premier '+rs]||MONTHLY_PRICING['Zoom Workplace Enterprise Premier US/Canada'];
+    const mp=MONTHLY_PRICING[plan.name];
+    if(mp) return mp;
+  }
+  // Fall through to annual
+
   const r=region||formData.region;
   const regionSuffix={'US/Canada':'US/Canada','UK/Ireland':'UK/Ireland','Australia/New Zealand':'ANZ','Japan':'Japan','Global/Multi-Region':'Global Select'};
   const rs=regionSuffix[r]||'US/Canada';
@@ -914,90 +637,20 @@ function getPricingKey(plan,region){
 }
 
 function getPhonePricingKey(){
+  const pricingSource=formData.billingTerm==='Monthly'?MONTHLY_PRICING:PRICING;
   const r=formData.region;const metered=formData.phoneType&&(formData.phoneType.includes('Metered')||formData.phoneType.includes('PAYG'));
   const gs=formData.phoneType&&formData.phoneType.includes('Global Select');
   if(gs) return metered?PRICING['Zoom Phone Global Select Metered']:PRICING['Zoom Phone Global Select'];
   if(metered) return PRICING['Zoom Phone Pro (Standalone)'];
   const map={'US/Canada':'Zoom Phone US/Canada Unlimited','UK/Ireland':'Zoom Phone UK/Ireland Unlimited','Australia/New Zealand':'Zoom Phone ANZ Unlimited','Japan':'Zoom Phone Japan Unlimited','Global/Multi-Region':'Zoom Phone Global Select'};
-  return PRICING[map[r]||'Zoom Phone US/Canada Unlimited'];
+  return pricingSource[map[r]||'Zoom Phone US/Canada Unlimited']||PRICING[map[r]||'Zoom Phone US/Canada Unlimited'];
 }
 
 function getPhoneUpgradeKey(){
+  const pricingSource=formData.billingTerm==='Monthly'?MONTHLY_PRICING:PRICING;
   const r=formData.region;
   const map={'US/Canada':'Zoom Phone Upgrade US/Canada','UK/Ireland':'Zoom Phone Upgrade UK/Ireland','Australia/New Zealand':'Zoom Phone Upgrade ANZ','Japan':'Zoom Phone Upgrade Japan','Global/Multi-Region':'Zoom Phone Upgrade Global Select'};
-  return PRICING[map[r]||'Zoom Phone Upgrade US/Canada'];
-}
-
-
-function getPhoneOnlyRecommendation(){
-  const region=formData.region;
-  const metered=formData.phoneType&&(formData.phoneType.includes('Metered')||formData.phoneType.includes('PAYG'));
-  const globalSelect=formData.phoneType&&formData.phoneType.includes('Global Select');
-  let rec,alts=[];
-  if(metered){rec=PHONE_ONLY_PLANS[0];alts=PHONE_ONLY_PLANS.filter(p=>p.region===region||p.region==='any').filter(p=>p!==rec).slice(0,2);}
-  else if(globalSelect){rec=PHONE_ONLY_PLANS.find(p=>p.name.includes('Global Select')&&!p.name.includes('Metered'));alts=[PHONE_ONLY_PLANS.find(p=>p.name.includes('Global Select Metered')),PHONE_ONLY_PLANS[0]].filter(Boolean);}
-  else{const regionMap={'US/Canada':'US/Canada','UK/Ireland':'UK/Ireland','Australia/New Zealand':'Australia/New Zealand','Japan':'Japan','Global/Multi-Region':'Global/Multi-Region'};const r=regionMap[region]||'US/Canada';rec=PHONE_ONLY_PLANS.find(p=>p.region===r)||PHONE_ONLY_PLANS[1];alts=[PHONE_ONLY_PLANS[0],PHONE_ONLY_PLANS.find(p=>p.name.includes('Global Select')&&!p.name.includes('Metered'))].filter(p=>p&&p!==rec);}
-  return {rec,alts,why:`Phone-only deployment — standalone ${rec.name} at ${fmt$(rec.annual)}/user/yr.`};
-}
-
-function getRecommendation(){
-  if(formData.phoneOnly&&formData.phone) return getPhoneOnlyRecommendation();
-  const n=parseInt(formData.totalUsers)||1;
-  const needsPhone=formData.phone;
-  const unlimited=formData.phoneType&&!formData.phoneType.includes('Metered')&&!formData.phoneType.includes('PAYG');
-  const metered=formData.phoneType&&(formData.phoneType.includes('Metered')||formData.phoneType.includes('PAYG'));
-  const needsWebinar1000=formData.webinars&&(formData.webinarAudience==='Up to 1000'||formData.webinarAudience==='Up to 3000'||formData.webinarAudience==='5000+');
-  const needsRooms11=formData.rooms&&parseInt(formData.roomsQty)>10;
-  const needsCMK=formData.cmk;const needsMSTeams=formData.msTeams;const needsPremier=formData.premierSupport;
-  let rec,why,alts=[];
-  if(n<10){
-    if(needsPhone&&unlimited){rec=PLANS[1];why='Phone with unlimited calling bundled for small team (<10 users).';}
-    else if(needsPhone){rec=PLANS[1];why='Phone Pro included. Pro Plus covers small teams with phone needs.';alts.push(PLANS[0]);}
-    else{rec=PLANS[0];why='Basic Meetings + collaboration for a small team.';alts.push(PLANS[1]);}
-  } else if(n<50){
-    if(needsPhone&&unlimited){rec=PLANS[3];why='All-in-one: Meetings (300 cap) + Phone Unlimited + Workspace features.';alts.push(PLANS[2]);}
-    else if(needsPhone){rec=PLANS[3];why='Business Plus includes Phone Pro. Best value for 10-49 users.';alts.push(PLANS[2]);}
-    else{rec=PLANS[2];why='300-cap meetings, SSO/branding, Unlimited Whiteboard for mid-market.';alts.push(PLANS[3]);}
-  } else if(n<250){
-    if(needsWebinar1000||needsRooms11||needsCMK||needsMSTeams){rec=PLANS[6];why='1000-cap meetings, Webinar Plus 1000, Rooms 1:1, CMK, MS Teams.';alts.push(PLANS[7]);}
-    else if(formData.webinars&&formData.rooms){rec=PLANS[4];why='Webinar 500 + Rooms (25:1 ratio) for enterprise.';alts.push(PLANS[6]);}
-    else if(needsPhone&&unlimited&&needsPremier){rec=PLANS[7];why='Unlimited Phone, Mesh, Premier Support — top-tier.';alts.push(PLANS[6]);}
-    else if(needsPhone){rec=PLANS[5];why='Enterprise with Phone Pro, Webinar 500, 500-cap meetings.';alts.push(PLANS[6]);}
-    else{rec=PLANS[5];why='Enterprise-grade meetings (500 cap), Webinar 500, Phone Pro included.';alts.push(PLANS[4]);}
-  } else {
-    if(needsPhone&&unlimited&&needsPremier){rec=PLANS[7];why='Unlimited Phone, Mesh, Premier Support, 1000-cap meetings.';alts.push(PLANS[6]);}
-    else if(needsCMK||needsMSTeams||needsWebinar1000){rec=PLANS[6];why='1000-cap meetings, CMK, MS Teams, Webinar Plus 1000, Rooms 1:1.';alts.push(PLANS[7]);}
-    else{rec=PLANS[6];why='Enterprise Plus is the default for 250+ users — comprehensive feature set.';alts.push(PLANS[7]);alts.push(PLANS[5]);}
-  }
-  return {rec,why,alts};
-}
-
-function getPricingKey(plan,region){
-  const r=region||formData.region;
-  const regionSuffix={'US/Canada':'US/Canada','UK/Ireland':'UK/Ireland','Australia/New Zealand':'ANZ','Japan':'Japan','Global/Multi-Region':'Global Select'};
-  const rs=regionSuffix[r]||'US/Canada';
-  if(PRICING[plan.name]) return PRICING[plan.name];
-  const withRegion=plan.name+' '+rs;
-  if(PRICING[withRegion]) return PRICING[withRegion];
-  if(plan.name.includes('Pro Plus')) return PRICING['Zoom Workplace Pro Plus '+rs]||PRICING['Zoom Workplace Pro Plus US/Canada'];
-  if(plan.name.includes('Business Plus')) return PRICING['Zoom Workplace Business Plus '+rs]||PRICING['Zoom Workplace Business Plus US/Canada'];
-  if(plan.name.includes('Enterprise Premier')) return PRICING['Zoom Workplace Enterprise Premier '+rs]||PRICING['Zoom Workplace Enterprise Premier US/Canada'];
-  return PRICING[plan.name]||null;
-}
-
-function getPhonePricingKey(){
-  const r=formData.region;const metered=formData.phoneType&&(formData.phoneType.includes('Metered')||formData.phoneType.includes('PAYG'));
-  const gs=formData.phoneType&&formData.phoneType.includes('Global Select');
-  if(gs) return metered?PRICING['Zoom Phone Global Select Metered']:PRICING['Zoom Phone Global Select'];
-  if(metered) return PRICING['Zoom Phone Pro (Standalone)'];
-  const map={'US/Canada':'Zoom Phone US/Canada Unlimited','UK/Ireland':'Zoom Phone UK/Ireland Unlimited','Australia/New Zealand':'Zoom Phone ANZ Unlimited','Japan':'Zoom Phone Japan Unlimited','Global/Multi-Region':'Zoom Phone Global Select'};
-  return PRICING[map[r]||'Zoom Phone US/Canada Unlimited'];
-}
-
-function getPhoneUpgradeKey(){
-  const r=formData.region;
-  const map={'US/Canada':'Zoom Phone Upgrade US/Canada','UK/Ireland':'Zoom Phone Upgrade UK/Ireland','Australia/New Zealand':'Zoom Phone Upgrade ANZ','Japan':'Zoom Phone Upgrade Japan','Global/Multi-Region':'Zoom Phone Upgrade Global Select'};
-  return PRICING[map[r]||'Zoom Phone Upgrade US/Canada'];
+  return pricingSource[map[r]||'Zoom Phone Upgrade US/Canada']||PRICING[map[r]||'Zoom Phone Upgrade US/Canada'];
 }
 
 function renderResults(){
@@ -1005,103 +658,106 @@ function renderResults(){
   const n=parseInt(formData.totalUsers)||1;
   const isPhoneOnly=formData.phoneOnly&&formData.phone;
   const minMet=isPhoneOnly?true:n>=(rec.min_quantity||1);
-  let lines=[];let totalAnnual=0;let totalMonthly=0;let hasAnyMonthly=false;
+  let lines=[];let totalAnnual=0;
   
   if(isPhoneOnly){
     const pqty=parseInt(formData.phoneUsers)||n;
-    const mo=rec.monthly;
-    if(mo!==null) hasAnyMonthly=true;
-    lines.push({item:'Zoom Phone License',plan:rec.name,sku:rec.sku,qty:pqty,annual:rec.annual,monthly:mo,total:rec.annual*pqty,totalMo:mo!==null?mo*pqty:null,notes:'Standalone phone'});
-    totalAnnual+=rec.annual*pqty;
-    if(mo!==null) totalMonthly+=mo*pqty;
+    lines.push({item:'Zoom Phone License',plan:rec.name,sku:rec.sku,qty:pqty,price:rec.price,total:rec.price*pqty,notes:'Standalone phone'});
+    totalAnnual+=rec.price*pqty;
   } else {
     const basePricing=getPricingKey(rec,formData.region);
-    const baseAnnual=basePricing?basePricing.annual:0;
-    const baseMo=basePricing?basePricing.monthly:null;
-    if(baseMo!==null) hasAnyMonthly=true;
-    lines.push({item:'Zoom Workplace Base',plan:rec.name,sku:basePricing?basePricing.sku:'—',qty:n,annual:baseAnnual,monthly:baseMo,total:baseAnnual*n,totalMo:baseMo!==null?baseMo*n:null,notes:'Base license — all named users'});
-    totalAnnual+=baseAnnual*n;
-    if(baseMo!==null) totalMonthly+=baseMo*n;
+    const basePrice=basePricing?basePricing.price:0;
+    lines.push({item:'Zoom Workplace Base',plan:rec.name,sku:basePricing?basePricing.sku:'—',qty:n,price:basePrice,total:basePrice*n,notes:'Base license — all named users'});
+    totalAnnual+=basePrice*n;
     // Phone logic
     if(formData.phone){
       const pqty=parseInt(formData.phoneUsers)||n;
       const unlimited=formData.phoneType&&!formData.phoneType.includes('Metered')&&!formData.phoneType.includes('PAYG');
       if(rec.phone_included.unlimited_regional){
-        lines.push({item:'Zoom Phone',plan:'Unlimited Regional',sku:'—',qty:pqty,annual:0,monthly:0,total:0,totalMo:0,notes:'INCLUDED in bundle'});
+        lines.push({item:'Zoom Phone',plan:'Unlimited Regional',sku:'—',qty:pqty,price:0,total:0,notes:'INCLUDED in bundle'});
       } else if(rec.phone_included.phone_pro&&unlimited){
+        // Need upgrade add-on
         const upg=getPhoneUpgradeKey();
-        const upgAnnual=upg?upg.annual:84;
-        const upgMo=upg?upg.monthly:null;
-        if(upgMo!==null) hasAnyMonthly=true;
-        lines.push({item:'Phone Upgrade to Unlimited',plan:'Workplace Phone Add-On',sku:upg?upg.sku:'—',qty:pqty,annual:upgAnnual,monthly:upgMo,total:upgAnnual*pqty,totalMo:upgMo!==null?upgMo*pqty:null,notes:'Upgrade from included Phone Pro to Unlimited'});
-        totalAnnual+=upgAnnual*pqty;
-        if(upgMo!==null) totalMonthly+=upgMo*pqty;
+        lines.push({item:'Phone Upgrade to Unlimited',plan:'Workplace Calling Add-On',sku:upg?upg.sku:'—',qty:pqty,price:upg?upg.price:84,total:(upg?upg.price:84)*pqty,notes:'⚠️ REQUIRED — Plan includes Phone Pro only. This add-on upgrades to Unlimited Regional Calling as selected.'});
+        totalAnnual+=(upg?upg.price:84)*pqty;
       } else if(rec.phone_included.phone_pro){
-        lines.push({item:'Zoom Phone',plan:'Phone Pro (Metered)',sku:'—',qty:pqty,annual:0,monthly:0,total:0,totalMo:0,notes:'INCLUDED in bundle'});
+        lines.push({item:'Zoom Phone',plan:'Phone Pro (Metered)',sku:'—',qty:pqty,price:0,total:0,notes:'INCLUDED in bundle'});
       } else {
         const phonePr=getPhonePricingKey();
-        const phAnnual=phonePr?phonePr.annual:0;
-        const phMo=phonePr?phonePr.monthly:null;
-        if(phMo!==null) hasAnyMonthly=true;
-        lines.push({item:'Zoom Phone Add-on',plan:formData.phoneType||'Phone',sku:phonePr?phonePr.sku:'—',qty:pqty,annual:phAnnual,monthly:phMo,total:phAnnual*pqty,totalMo:phMo!==null?phMo*pqty:null,notes:'Standalone add-on'});
-        totalAnnual+=phAnnual*pqty;
-        if(phMo!==null) totalMonthly+=phMo*pqty;
+        lines.push({item:'Zoom Phone Add-on',plan:formData.phoneType||'Phone',sku:phonePr?phonePr.sku:'—',qty:pqty,price:phonePr?phonePr.price:0,total:(phonePr?phonePr.price:0)*pqty,notes:'Standalone add-on'});
+        totalAnnual+=(phonePr?phonePr.price:0)*pqty;
       }
     }
+  }
+  // Zoom Phone PAYG (required for all Phone subscriptions)
+  if(formData.phone&&!isPhoneOnly){
+    lines.push({item:'Zoom Phone PAYG',plan:'Required Usage Plan',sku:'ZP-PAYG-RCR',qty:1,price:0,total:0,notes:'REQUIRED — $0 base, enables usage billing. Auto-included.'});
+  }
+  if(isPhoneOnly){
+    lines.push({item:'Zoom Phone PAYG',plan:'Required Usage Plan',sku:'ZP-PAYG-RCR',qty:1,price:0,total:0,notes:'REQUIRED — $0 base, enables usage billing. Auto-included.'});
   }
   // Power Pack
   if(formData.powerPack){
     const ppq=parseInt(formData.powerPackUsers)||parseInt(formData.phoneUsers)||n;
     const inc=!isPhoneOnly&&rec.phone_included&&rec.phone_included.powerpack;
-    const pp=PRICING['Zoom Phone Power Pack'];
-    const cost=inc?0:pp.annual;const mo=inc?0:pp.monthly;
-    if(mo!==null&&!inc) hasAnyMonthly=true;
-    lines.push({item:'Power Pack',plan:'Customer Engagement Pack',sku:pp.sku,qty:ppq,annual:cost,monthly:inc?0:mo,total:cost*ppq,totalMo:mo!==null?mo*ppq:null,notes:inc?'INCLUDED in bundle':'Call queue analytics, team SMS, VIP delegation'});
-    totalAnnual+=cost*ppq;if(mo!==null&&!inc) totalMonthly+=mo*ppq;
+    const pp=getActivePricing('Zoom Phone Power Pack');
+    const cost=inc?0:pp.price;
+    lines.push({item:'Power Pack',plan:'Customer Engagement Pack',sku:pp.sku,qty:ppq,price:cost,total:cost*ppq,notes:inc?'INCLUDED in bundle':'Call queue analytics, team SMS, VIP delegation'});
+    totalAnnual+=cost*ppq;
   }
   // International Calling
   if(formData.intlCalling){
     const iq=parseInt(formData.intlCallingUsers)||parseInt(formData.phoneUsers)||n;
-    const ic=PRICING['Zoom Phone Intl Unlimited'];
-    if(ic.monthly!==null) hasAnyMonthly=true;
-    lines.push({item:'International Calling',plan:'Unlimited Intl Add-on',sku:ic.sku,qty:iq,annual:ic.annual,monthly:ic.monthly,total:ic.annual*iq,totalMo:ic.monthly!==null?ic.monthly*iq:null,notes:'Unlimited calling to 15+ countries'});
-    totalAnnual+=ic.annual*iq;if(ic.monthly!==null) totalMonthly+=ic.monthly*iq;
+    const ic=getActivePricing('Zoom Phone Intl Unlimited');
+    lines.push({item:'International Calling',plan:'Unlimited Intl Add-on',sku:ic.sku,qty:iq,price:ic.price,total:ic.price*iq,notes:'Unlimited calling to 15+ countries'});
+    totalAnnual+=ic.price*iq;
   }
   // Additional DIDs
   if(formData.additionalDID){
     const dq=parseInt(formData.didQty)||1;
     const did=PRICING['Additional Phone Number (DID/Toll-Free)'];
-    if(did.monthly!==null) hasAnyMonthly=true;
-    lines.push({item:'Additional Phone Numbers',plan:'DID / Toll-Free',sku:did.sku,qty:dq,annual:did.annual,monthly:did.monthly,total:did.annual*dq,totalMo:did.monthly!==null?did.monthly*dq:null,notes:'Extra inbound numbers'});
-    totalAnnual+=did.annual*dq;if(did.monthly!==null) totalMonthly+=did.monthly*dq;
+    lines.push({item:'Additional Phone Numbers',plan:'DID / Toll-Free',sku:did.sku,qty:dq,price:did.price,total:did.price*dq,notes:'Extra inbound numbers'});
+    totalAnnual+=did.price*dq;
   }
-  // ZPLS
+  // ZPLS / Phone Hybrid
   if(formData.zpls){
     const zq=parseInt(formData.zplsQty)||1;
-    const zp=PRICING['Zoom Phone Hybrid (ZPLS)'];
-    if(zp.monthly!==null) hasAnyMonthly=true;
-    lines.push({item:'Phone Local Survivability',plan:'ZPLS / Phone Hybrid',sku:zp.sku,qty:zq,annual:zp.annual,monthly:zp.monthly,total:zp.annual*zq,totalMo:zp.monthly!==null?zp.monthly*zq:null,notes:'On-prem failover per site (requires Zoom Node)'});
-    totalAnnual+=zp.annual*zq;if(zp.monthly!==null) totalMonthly+=zp.monthly*zq;
+    const zp=getActivePricing('Zoom Phone Hybrid (ZPLS)');
+    lines.push({item:'Phone Local Survivability',plan:'ZPLS / Phone Hybrid',sku:zp.sku,qty:zq,price:zp.price,total:zp.price*zq,notes:'On-prem failover per site (requires Zoom Node)'});
+    totalAnnual+=zp.price*zq;
   }
   // Common Area
   if(formData.commonArea){
     const cq=parseInt(formData.commonAreaQty)||1;
     const inc=!isPhoneOnly&&rec.phone_included&&rec.phone_included.common_area;
-    const cap=PRICING['Zoom Phone Common Area'];
-    const cost=inc?0:cap.annual;const mo=inc?0:cap.monthly;
-    if(mo!==null&&!inc) hasAnyMonthly=true;
-    lines.push({item:'Common Area Phones',plan:'Common Area License',sku:cap.sku,qty:cq,annual:cost,monthly:inc?0:mo,total:cost*cq,totalMo:mo!==null?mo*cq:null,notes:inc?'INCLUDED in bundle':'Lobby/shared devices'});
-    totalAnnual+=cost*cq;if(mo!==null&&!inc) totalMonthly+=mo*cq;
+    const cap=getActivePricing('Zoom Phone Common Area');
+    const cost=inc?0:cap.price;
+    lines.push({item:'Common Area Phones',plan:'Common Area License',sku:cap.sku,qty:cq,price:cost,total:cost*cq,notes:inc?'INCLUDED in bundle':'Lobby/shared devices'});
+    totalAnnual+=cost*cq;
   }
   // Rooms
   if(formData.rooms){
     const rq=parseInt(formData.roomsQty)||1;
     const rInc=!isPhoneOnly&&rec.features&&rec.features.zoom_rooms;
-    const rp=PRICING['Zoom Rooms'];
-    const cost=rInc?0:rp.annual;const mo=rInc?0:rp.monthly;
-    if(mo!==null&&!rInc) hasAnyMonthly=true;
-    lines.push({item:'Zoom Rooms',plan:'Rooms License',sku:rp.sku,qty:rq,annual:cost,monthly:rInc?0:mo,total:cost*rq,totalMo:mo!==null?mo*rq:null,notes:rInc?`INCLUDED (${rec.features.zoom_rooms})`:'Per-room license'});
-    totalAnnual+=cost*rq;if(mo!==null&&!rInc) totalMonthly+=mo*rq;
+    const rp=getActivePricing('Zoom Rooms');
+    if(rInc){
+      const roomsRatio=rec.features.zoom_rooms;
+      let includedRooms=0;
+      if(roomsRatio.includes('(25)')) includedRooms=Math.floor(n/25);
+      else if(roomsRatio.includes('(1)')) includedRooms=n;
+      const extraRooms=Math.max(0,rq-includedRooms);
+      const cost=extraRooms>0?rp.price:0;
+      if(extraRooms>0){
+        lines.push({item:'Zoom Rooms (included)',plan:'Bundle Ratio',sku:'—',qty:includedRooms,price:0,total:0,notes:`INCLUDED (${roomsRatio.includes('(25)')?'25:1':'1:1'} ratio = ${includedRooms} rooms)`});
+        lines.push({item:'Zoom Rooms (additional)',plan:'Extra Rooms',sku:rp.sku,qty:extraRooms,price:rp.price,total:rp.price*extraRooms,notes:`${rq} needed - ${includedRooms} included = ${extraRooms} extra`});
+        totalAnnual+=rp.price*extraRooms;
+      } else {
+        lines.push({item:'Zoom Rooms',plan:'Bundle Ratio',sku:'—',qty:rq,price:0,total:0,notes:`INCLUDED (${roomsRatio.includes('(25)')?'25:1':'1:1'} ratio = ${includedRooms} available)`});
+      }
+    } else {
+      lines.push({item:'Zoom Rooms',plan:'Rooms License',sku:rp.sku,qty:rq,price:rp.price,total:rp.price*rq,notes:'Per-room license (add-on)'});
+      totalAnnual+=rp.price*rq;
+    }
   }
   // Webinars
   if(formData.webinars){
@@ -1111,117 +767,220 @@ function renderResults(){
     if(formData.webinarAudience==='Up to 1000') wKey='Webinar 1000';
     else if(formData.webinarAudience==='Up to 3000'||formData.webinarAudience==='5000+') wKey='Webinar 3000';
     const wp=PRICING[wKey];
-    const cost=wInc?0:(wp?wp.annual:1000);const mo=wInc?0:(wp?wp.monthly:null);
-    if(mo!==null&&!wInc) hasAnyMonthly=true;
-    lines.push({item:'Webinar',plan:wInc?rec.features.webinars:wKey,sku:wp?wp.sku:'—',qty:wh,annual:cost,monthly:wInc?0:mo,total:cost*wh,totalMo:mo!==null?mo*wh:null,notes:wInc?'INCLUDED in bundle':formData.webinarAudience});
-    totalAnnual+=cost*wh;if(mo!==null&&!wInc) totalMonthly+=mo*wh;
+    const cost=wInc?0:(wp?wp.price:1000);
+    lines.push({item:'Webinar',plan:wInc?rec.features.webinars:wKey,sku:wp?wp.sku:'—',qty:wh,price:cost,total:cost*wh,notes:wInc?'INCLUDED in bundle':formData.webinarAudience});
+    totalAnnual+=cost*wh;
   }
   // Zoom Events
   if(formData.zoomEvents){
     const ze=formData.eventModel==='Unlimited (500 attendees)'?PRICING['Zoom Events 500 Unlimited']:PRICING['Zoom Events PPA'];
     const eq=formData.eventModel==='Pay Per Attendee'?parseInt(formData.eventAttendees)||500:1;
-    const zeAnnual=ze?ze.annual:0;const zeMo=ze?ze.monthly:null;
-    if(zeMo!==null) hasAnyMonthly=true;
-    lines.push({item:'Zoom Events',plan:formData.eventModel||'TBD',sku:ze?ze.sku:'—',qty:eq,annual:zeAnnual,monthly:zeMo,total:zeAnnual*eq,totalMo:zeMo!==null?zeMo*eq:null,notes:formData.eventModel==='Pay Per Attendee'?'Per attendee pricing':'Unlimited sessions'});
-    totalAnnual+=zeAnnual*eq;if(zeMo!==null) totalMonthly+=zeMo*eq;
+    lines.push({item:'Zoom Events',plan:formData.eventModel||'TBD',sku:ze?ze.sku:'—',qty:eq,price:ze?ze.price:0,total:(ze?ze.price:0)*eq,notes:formData.eventModel==='Pay Per Attendee'?'Per attendee pricing':'Unlimited sessions'});
+    totalAnnual+=(ze?ze.price:0)*eq;
   }
   // ZRA
   if(formData.zra){
     const zra=PRICING['ZRA + Phone US/CA Unlimited'];
     const zq=parseInt(formData.phoneUsers)||n;
-    if(zra.monthly!==null) hasAnyMonthly=true;
-    lines.push({item:'Revenue Accelerator',plan:'ZRA + Phone Bundle',sku:zra.sku,qty:zq,annual:zra.annual,monthly:zra.monthly,total:zra.annual*zq,totalMo:zra.monthly!==null?zra.monthly*zq:null,notes:'Conversation intelligence + auto dialer'});
-    totalAnnual+=zra.annual*zq;if(zra.monthly!==null) totalMonthly+=zra.monthly*zq;
-  }
-  // ZVA for Voice
-  if(formData.zvaVoice){
-    const zv=PRICING['ZVA for Voice'];
-    const mins=parseInt(formData.zvaMinutes)||10000;
-    const annualMins=mins*12;
-    lines.push({item:'ZVA for Voice',plan:'Per-minute consumption',sku:zv.sku,qty:annualMins,annual:zv.annual,monthly:zv.monthly,total:zv.annual*annualMins,totalMo:null,notes:'Generative AI voice bot (estimated '+mins+' min/mo)'});
-    totalAnnual+=zv.annual*annualMins;
-  }
-  // ZVA for Chat
-  if(formData.zvaChat){
-    const zc=PRICING['ZVA for Chat'];
-    const res=parseInt(formData.zvaMinutes)||10000;
-    const annualRes=res*12;
-    lines.push({item:'ZVA for Chat',plan:'Per-resolution consumption',sku:zc.sku,qty:annualRes,annual:zc.annual,monthly:zc.monthly,total:zc.annual*annualRes,totalMo:null,notes:'AI chatbot (estimated '+res+' resolutions/mo)'});
-    totalAnnual+=zc.annual*annualRes;
+    lines.push({item:'Revenue Accelerator',plan:'ZRA + Phone Bundle',sku:zra.sku,qty:zq,price:zra.price,total:zra.price*zq,notes:'Conversation intelligence + auto dialer'});
+    totalAnnual+=zra.price*zq;
   }
   // Workspace Reservation
   if(formData.workspaceRes){
     const inc=!isPhoneOnly&&rec.features&&rec.features.workspace_reservation;
-    const wr=PRICING['Workspace Reservation'];
-    const cost=inc?0:wr.annual;const mo=inc?0:wr.monthly;
-    if(mo!==null&&!inc) hasAnyMonthly=true;
-    lines.push({item:'Workspace Reservation',plan:'Hot Desking',sku:wr.sku,qty:n,annual:cost,monthly:inc?0:mo,total:cost*n,totalMo:mo!==null?mo*n:null,notes:inc?'INCLUDED in bundle':'Desk/room booking, floor maps'});
-    totalAnnual+=cost*n;if(mo!==null&&!inc) totalMonthly+=mo*n;
+    const wr=getActivePricing('Workspace Reservation');
+    const cost=inc?0:wr.price;
+    lines.push({item:'Workspace Reservation',plan:'Hot Desking',sku:wr.sku,qty:n,price:cost,total:cost*n,notes:inc?'INCLUDED in bundle':'Desk/room booking, floor maps'});
+    totalAnnual+=cost*n;
   }
   // Visitor Management
   if(formData.visitorMgmt){
     const inc=!isPhoneOnly&&rec.features&&rec.features.visitor_management;
-    const vm=PRICING['Visitor Management'];
-    const cost=inc?0:vm.annual;const mo=inc?0:vm.monthly;
-    if(mo!==null&&!inc) hasAnyMonthly=true;
-    const vq=1;
-    lines.push({item:'Visitor Management',plan:'Lobby Check-in',sku:vm.sku,qty:vq,annual:cost,monthly:inc?0:mo,total:cost*vq,totalMo:mo!==null?mo*vq:null,notes:inc?'INCLUDED in bundle':'Per location'});
-    totalAnnual+=cost*vq;if(mo!==null&&!inc) totalMonthly+=mo*vq;
+    const vm=getActivePricing('Visitor Management');
+    const cost=inc?0:vm.price;
+    const vq=1; // per location
+    lines.push({item:'Visitor Management',plan:'Lobby Check-in',sku:vm.sku,qty:vq,price:cost,total:cost*vq,notes:inc?'INCLUDED in bundle':'Per location'});
+    totalAnnual+=cost*vq;
   }
   // Scheduler
-  if(formData.scheduler){const s=PRICING['Zoom Scheduler'];if(s.monthly!==null)hasAnyMonthly=true;lines.push({item:'Zoom Scheduler',plan:'Appointment Booking',sku:s.sku,qty:n,annual:s.annual,monthly:s.monthly,total:s.annual*n,totalMo:s.monthly!==null?s.monthly*n:null,notes:'Booking pages'});totalAnnual+=s.annual*n;if(s.monthly!==null)totalMonthly+=s.monthly*n;}
+  if(formData.scheduler){const s=getActivePricing('Zoom Scheduler');lines.push({item:'Zoom Scheduler',plan:'Appointment Booking',sku:s.sku,qty:n,price:s.price,total:s.price*n,notes:'Booking pages'});totalAnnual+=s.price*n;}
   // Clips Plus
-  if(formData.clipsPlus){const c=PRICING['Zoom Clips Plus'];if(c.monthly!==null)hasAnyMonthly=true;lines.push({item:'Zoom Clips Plus',plan:'Async Video',sku:c.sku,qty:n,annual:c.annual,monthly:c.monthly,total:c.annual*n,totalMo:c.monthly!==null?c.monthly*n:null,notes:'Video messaging'});totalAnnual+=c.annual*n;if(c.monthly!==null)totalMonthly+=c.monthly*n;}
+  if(formData.clipsPlus){const c=getActivePricing('Zoom Clips Plus');lines.push({item:'Zoom Clips Plus',plan:'Async Video',sku:c.sku,qty:n,price:c.price,total:c.price*n,notes:'Video messaging'});totalAnnual+=c.price*n;}
   // Translation
   if(formData.translation){
     const inc=!isPhoneOnly&&rec.features&&rec.features.translation;
-    const t=PRICING['Translated Captions'];const cost=inc?0:t.annual;const mo=inc?0:t.monthly;
-    if(mo!==null&&!inc)hasAnyMonthly=true;
-    lines.push({item:'Translated Captions',plan:'Live Translation',sku:t.sku,qty:n,annual:cost,monthly:inc?0:mo,total:cost*n,totalMo:mo!==null?mo*n:null,notes:inc?'INCLUDED in bundle':'Real-time meeting translation'});
-    totalAnnual+=cost*n;if(mo!==null&&!inc)totalMonthly+=mo*n;
+    const t=getActivePricing('Translated Captions');
+    const cost=inc?0:t.price;
+    lines.push({item:'Translated Captions',plan:'Live Translation',sku:t.sku,qty:n,price:cost,total:cost*n,notes:inc?'INCLUDED in bundle':'Real-time meeting translation'});
+    totalAnnual+=cost*n;
   }
   // CMK
   if(formData.cmk){
     const inc=!isPhoneOnly&&rec.features&&rec.features.customer_managed_key;
-    const c=PRICING['Customer Managed Key'];const cost=inc?0:c.annual;const mo=inc?0:c.monthly;
-    if(mo!==null&&!inc)hasAnyMonthly=true;
-    lines.push({item:'Customer Managed Key',plan:'CMK',sku:c.sku,qty:n,annual:cost,monthly:inc?0:mo,total:cost*n,totalMo:mo!==null?mo*n:null,notes:inc?'INCLUDED in bundle':'Encryption key control'});
-    totalAnnual+=cost*n;if(mo!==null&&!inc)totalMonthly+=mo*n;
+    const c=getActivePricing('Customer Managed Key');
+    const cost=inc?0:c.price;
+    lines.push({item:'Customer Managed Key',plan:'CMK',sku:c.sku,qty:n,price:cost,total:cost*n,notes:inc?'INCLUDED in bundle':'Encryption key control'});
+    totalAnnual+=cost*n;
   }
   // Advanced Management
-  if(formData.advMgmt){const a=PRICING['Advanced Management'];if(a.monthly!==null)hasAnyMonthly=true;lines.push({item:'Advanced Management',plan:'DLP, Info Barriers',sku:a.sku,qty:n,annual:a.annual,monthly:a.monthly,total:a.annual*n,totalMo:a.monthly!==null?a.monthly*n:null,notes:'Security/compliance'});totalAnnual+=a.annual*n;if(a.monthly!==null)totalMonthly+=a.monthly*n;}
+  if(formData.advMgmt){const a=getActivePricing('Advanced Management');lines.push({item:'Advanced Management',plan:'DLP, Info Barriers',sku:a.sku,qty:n,price:a.price,total:a.price*n,notes:'Security/compliance for non-licensed users'});totalAnnual+=a.price*n;}
   // Compliance Manager
-  if(formData.complianceMgr){const c=PRICING['Compliance Manager (Theta Lake)'];if(c.monthly!==null)hasAnyMonthly=true;lines.push({item:'Compliance Manager',plan:'Theta Lake',sku:c.sku,qty:n,annual:c.annual,monthly:c.monthly,total:c.annual*n,totalMo:c.monthly!==null?c.monthly*n:null,notes:'eDiscovery, legal hold, DLP'});totalAnnual+=c.annual*n;if(c.monthly!==null)totalMonthly+=c.monthly*n;}
+  if(formData.complianceMgr){const c=getActivePricing('Compliance Manager (Theta Lake)');lines.push({item:'Compliance Manager',plan:'Theta Lake',sku:c.sku,qty:n,price:c.price,total:c.price*n,notes:'eDiscovery, legal hold, DLP'});totalAnnual+=c.price*n;}
   // Zoom Mesh
   if(formData.zoomMesh){
     const inc=!isPhoneOnly&&rec.features&&rec.features.mesh;
-    const m=PRICING['Zoom Mesh for Meetings'];const cost=inc?0:m.annual;const mo=inc?0:m.monthly;
-    if(mo!==null&&!inc)hasAnyMonthly=true;
-    lines.push({item:'Zoom Mesh',plan:'Bandwidth Optimization',sku:m.sku,qty:n,annual:cost,monthly:inc?0:mo,total:cost*n,totalMo:mo!==null?mo*n:null,notes:inc?'INCLUDED in bundle':'Up to 60% bandwidth reduction'});
-    totalAnnual+=cost*n;if(mo!==null&&!inc)totalMonthly+=mo*n;
+    const m=getActivePricing('Zoom Mesh for Meetings');
+    const cost=inc?0:m.price;
+    lines.push({item:'Zoom Mesh',plan:'Bandwidth Optimization',sku:m.sku,qty:n,price:cost,total:cost*n,notes:inc?'INCLUDED in bundle':'Up to 60% bandwidth reduction'});
+    totalAnnual+=cost*n;
   }
   // Audio Conferencing
-  if(formData.audioConf){const a=PRICING['Audio Conferencing'];if(a.monthly!==null)hasAnyMonthly=true;lines.push({item:'Audio Conferencing',plan:'Dial-in Audio',sku:a.sku,qty:n,annual:a.annual,monthly:a.monthly,total:a.annual*n,totalMo:a.monthly!==null?a.monthly*n:null,notes:'Toll/toll-free dial-in'});totalAnnual+=a.annual*n;if(a.monthly!==null)totalMonthly+=a.monthly*n;}
+  if(formData.audioConf){const a=getActivePricing('Audio Conferencing');lines.push({item:'Audio Conferencing',plan:'Dial-in Audio',sku:a.sku,qty:n,price:a.price,total:a.price*n,notes:'Toll/toll-free dial-in'});totalAnnual+=a.price*n;}
   // Concurrent Meetings
-  if(formData.concurrentMtg){const c=PRICING['Concurrent Meeting Plus'];if(c.monthly!==null)hasAnyMonthly=true;lines.push({item:'Concurrent Meetings',plan:'Plus',sku:c.sku,qty:1,annual:c.annual,monthly:c.monthly,total:c.annual,totalMo:c.monthly,notes:'Multiple simultaneous meetings'});totalAnnual+=c.annual;if(c.monthly!==null)totalMonthly+=c.monthly;}
+  if(formData.concurrentMtg){const c=getActivePricing('Concurrent Meeting Plus');lines.push({item:'Concurrent Meetings',plan:'Plus',sku:c.sku,qty:1,price:c.price,total:c.price,notes:'Multiple simultaneous meetings'});totalAnnual+=c.price;}
+  // ZVA
+  if(formData.zva){
+    const zvaTierKey='ZVA '+formData.zvaTier;
+    const zvaP=PRICING[zvaTierKey];
+    if(zvaP){lines.push({item:'Zoom Virtual Agent',plan:formData.zvaTier,sku:zvaP.sku,qty:1,price:zvaP.price,total:zvaP.price,notes:'Annual platform fee (monthly session volume)'});totalAnnual+=zvaP.price;}
+    else{lines.push({item:'Zoom Virtual Agent',plan:formData.zvaTier||'TBD',sku:'—',qty:1,price:'—',total:0,notes:'Select tier for pricing'});}
+    if(formData.zvaVoice){
+      const vVol=parseInt(formData.zvaVoiceVolume)||0;
+      const annualVoice=vVol*12*0.25;
+      lines.push({item:'ZVA for Voice',plan:'Per Interaction',sku:'ZCX-ZVAV-1-1YR',qty:vVol>0?vVol+'/mo':'TBD',price:0.25,total:annualVoice,notes:vVol>0?vVol*12+' interactions/yr est.':'Estimate monthly volume'});
+      totalAnnual+=annualVoice;
+    }
+    if(formData.zvaChat){
+      const cVol=parseInt(formData.zvaChatVolume)||0;
+      const annualChat=cVol*12*0.40;
+      lines.push({item:'ZVA for Chat',plan:'Per Interaction',sku:'ZCX-ZVAC-1-1YR',qty:cVol>0?cVol+'/mo':'TBD',price:0.40,total:annualChat,notes:cVol>0?cVol*12+' interactions/yr est.':'Estimate monthly volume'});
+      totalAnnual+=annualChat;
+    }
+  }
   // ZCC
-  if(formData.zcc) lines.push({item:'Zoom Contact Center',plan:'ZCC',sku:'—',qty:'TBD',annual:'—',monthly:null,total:0,totalMo:null,notes:'Separate quote — contact Zoom Channel SE'});
+  if(formData.zcc) lines.push({item:'Zoom Contact Center',plan:'ZCC',sku:'—',qty:'TBD',price:'—',total:0,notes:'Separate quote — contact Zoom Channel SE'});
   // Frontline
-  if(formData.frontline) lines.push({item:'Frontline Workers',plan:'Mobile/Desktop',sku:'—',qty:'TBD',annual:'—',monthly:null,total:0,totalMo:null,notes:'⚠️ Direct-only'});
+  if(formData.frontline) lines.push({item:'Frontline Workers',plan:'Mobile/Desktop',sku:'—',qty:'TBD',price:'—',total:0,notes:'⚠️ Direct-only'});
 
   // Flags
   let flags=[];
   if(formData.frontline) flags.push({type:'amber',text:'Frontline Worker plans are Direct-only and NOT Channel-eligible.'});
+  if(formData.zva) flags.push({type:'green',text:'ZVA is now a standalone product family (May 2026) with its own deal registration — separate from ZCC. Volume discounts available at higher tiers.'});
   if(formData.zcc) flags.push({type:'amber',text:'Zoom Contact Center requires a separate SKU and deal registration. Contact your Zoom Channel SE.'});
   if(!minMet) flags.push({type:'amber',text:`Minimum quantity for ${rec.name} is ${rec.min_quantity}. Current: ${n}. Adjust or consider lower tier.`});
   if(isPhoneOnly) flags.push({type:'blue',text:'Phone-Only Configuration: Standalone Zoom Phone is Channel-eligible and deal-registerable independently.'});
   if(formData.regulatedIndustry) flags.push({type:'amber',text:'Regulated Industry: Consider Compliance Manager, CMK, Advanced Management, and call recording compliance. Verify HIPAA BAA or FINRA requirements with Zoom.'});
-  if(formData.callQueues&&!formData.powerPack) flags.push({type:'blue',text:'Call Queues selected but Power Pack not added. Power Pack provides advanced queue analytics, wallboards, and team SMS.'});
-  if(formData.callQueues&&!formData.zvaVoice) flags.push({type:'blue',text:'🤖 Call Queues selected — consider Zoom Virtual Agent (ZVA) for Voice to automate inbound call handling and reduce agent load.'});
-  if(formData.porting) flags.push({type:'blue',text:'📞 Number Porting flagged — coordinate with Zoom porting team early. Allow 2-4 weeks for port completion. Gather LOA and CSR from current carrier.'});
-  if(formData.e911&&formData.multiSite) flags.push({type:'blue',text:'🚨 Multi-site + E911: Each site needs its own emergency address configured. Nomadic E911 required for remote/hybrid workers.'});
-  if(formData.zvaVoice||formData.zvaChat) flags.push({type:'amber',text:'⚠️ ZVA requires ZCX Authorized Partner status. Confirm partner authorization. Pricing is consumption-based (per-minute/resolution), not per-user.'});
-  if(formData.hybridWorkspace&&!formData.workspaceRes) flags.push({type:'blue',text:'Hybrid workspace flagged but Workspace Reservation not selected. Consider adding it for hot-desking.'});
+  if(formData.callQueues&&!formData.powerPack) flags.push({type:'blue',text:'Call Queues selected but Power Pack not added. Power Pack provides advanced queue analytics, wallboards, and team SMS. Consider adding it for queue-heavy deployments.'});
+  // Fax advisory
+  let faxAdvisory='';
+  if(formData.needsFax&&formData.phone){
+    const region=formData.region;
+    const isExcluded=(region==='Japan');
+    if(isExcluded){
+      faxAdvisory=`<div class="result-card"><h3>📠 Online Fax (eFax)</h3><div class="callout callout-amber"><strong>Not Available:</strong> Online Fax is not available in Japan or India. Traditional fax via ATA devices is not supported by Zoom Online Fax.</div></div>`;
+    } else {
+      const phoneUsers=parseInt(formData.phoneUsers)||parseInt(formData.totalUsers)||1;
+      let faxDetail='';
+      // Determine fax entitlement based on recommended plan
+      const planName=rec.name||'';
+      const isBusinessPlus=planName.includes('Business Plus');
+      const isEntPremier=planName.includes('Enterprise Premier');
+      const isUnlimited=formData.phoneType&&!formData.phoneType.includes('Metered')&&!formData.phoneType.includes('PAYG');
+      const isMetered=formData.phoneType&&(formData.phoneType.includes('Metered')||formData.phoneType.includes('PAYG'));
+      const isProPlus=planName.includes('Pro Plus');
+      if(isBusinessPlus||isEntPremier){
+        faxDetail=`<div class="callout callout-green"><strong>✅ Unlimited Domestic Fax Included</strong><br>
+          ${planName} includes unlimited inbound and outbound faxing for directly-assigned numbers at no per-page cost.<br>
+          <strong>Pool for AR/CQ/SLG:</strong> ${phoneUsers} users × 50 pages = <strong>${(phoneUsers*50).toLocaleString()} pages/month</strong> pooled for Auto Receptionist, Call Queue, and Shared Line Group faxes.<br>
+          <em>Overage beyond pool (AR/CQ/SLG only):</em> ~$0.05/page PAYG.</div>`;
+      } else if(isUnlimited||isProPlus){
+        const poolPages=phoneUsers*50;
+        faxDetail=`<div class="callout callout-blue"><strong>📠 50 Pages/User/Month Included (Pooled)</strong><br>
+          ${phoneUsers} users × 50 pages = <strong>${poolPages.toLocaleString()} pages/month</strong> account-level pool.<br>
+          Pool is shared across all users, Auto Receptionists, Call Queues, and Shared Line Groups.<br>
+          <em>Overage beyond pool:</em> ~$0.05/page PAYG.</div>`;
+      } else if(isMetered){
+        faxDetail=`<div class="callout callout-amber"><strong>⚠️ Fax Available — Per-Page Charges Apply</strong><br>
+          Zoom Phone Metered plans do not include fax pages. All faxes (inbound and outbound) are charged at PAYG rates (~$0.05/page).<br>
+          <em>Tip:</em> If fax volume is significant, consider upgrading to an Unlimited plan for 50 pooled pages/user/month.</div>`;
+      } else {
+        faxDetail=`<div class="callout callout-blue"><strong>📠 Online Fax Available</strong><br>
+          Fax is included with Zoom Phone plans. Entitlement depends on final plan selection.<br>
+          <em>Typical:</em> 50 pages/user/month pooled for Unlimited plans; per-page PAYG for Metered plans.</div>`;
+      }
+      faxAdvisory=`<div class="result-card"><h3>📠 Online Fax (eFax) Advisory</h3>
+        ${faxDetail}
+        <p style="font-size:12px;color:#666;margin-top:10px"><strong>How it works:</strong> Send/receive PDF faxes directly from Zoom Phone — no fax machine or analog line needed. Users with AR, CQ, or SLG caller IDs can also send faxes from those numbers.</p>
+        <p style="font-size:11px;color:#999;margin-top:6px">* Requires PAYG or Prepay billing plan enabled. Not available in Japan/India. ATA fax machines are not supported. Overage rate is approximate — confirm in Zoom billing portal.</p>
+      </div>`;
+    }
+  }
+  if(formData.hybridWorkspace&&!formData.workspaceRes) flags.push({type:'blue',text:'Hybrid workspace flagged but Workspace Reservation not selected. Consider adding it for hot-desking and floor map capabilities.'});
+  // Quoting Guide Rules
+  if(formData.phone&&!isPhoneOnly) flags.push({type:'blue',text:'Zoom Phone PAYG SKU (ZP-PAYG-RCR) is required for all Phone subscriptions. It has been auto-included at $0.'});
+  if(formData.billingTerm==='Monthly') flags.push({type:'amber',text:'⚠️ Monthly billing requires Zoom approval and an executed monthly billing agreement. Work with your Zoom AE to confirm eligibility before submitting the order.'});
+  if(!isPhoneOnly&&rec.name&&(rec.name.includes('Enterprise')&&!rec.name.includes('Essentials'))&&formData.phone){
+    const unlimited=formData.phoneType&&!formData.phoneType.includes('Metered')&&!formData.phoneType.includes('PAYG');
+    if(unlimited&&!rec.phone_included.unlimited_regional) flags.push({type:'amber',text:'⚠️ For Enterprise/Enterprise Plus: Use the Zoom Workplace Unlimited Calling add-on SKU (not standalone Phone plans) for the baked-in bundle discount.'});
+  }
+  if(!isPhoneOnly&&rec.name&&(rec.name.includes('Enterprise')&&!rec.name.includes('Essentials')&&!rec.name.includes('Premier'))&&formData.phone){
+    flags.push({type:'amber',text:'⚠️ Zoom Workplace Enterprise and Enterprise Plus do NOT come with DIDs. You must quote additional calling plans or DID number licenses if the customer needs phone numbers.'});
+  }
+  if(!isPhoneOnly&&rec.name&&(rec.name.includes('Enterprise Plus')||rec.name.includes('Enterprise Premier'))){
+    flags.push({type:'amber',text:'⚠️ '+rec.name+' cannot be combined with other Zoom Workplace base plans on the same account. This is a standalone bundle.'});
+  }
+  if(!isPhoneOnly&&rec.name&&rec.name.includes('Enterprise Premier')){
+    const meshQty=Math.ceil(n*0.2);
+    flags.push({type:'blue',text:'Enterprise Premier includes Zoom Mesh for Meetings at 20% of license count: '+n+' licenses = '+meshQty+' Mesh licenses included.'});
+  }
+  if(formData.frontline&&!isPhoneOnly) flags.push({type:'blue',text:'Frontline Workers requires at least one Workplace base plan on the account. Includes Zoom Phone Basic entitlement. Class 2 discount applies.'});
+
+  // ELA Advisory
+  let elaAdvisory='';
+  const zplsNodes=parseInt(formData.zplsQty)||0;
+  if(!isPhoneOnly&&n>=250&&formData.zpls&&zplsNodes>=3){
+    const elaPrice=240;const elaPremierPrice=264;
+    const elaTotal=n*elaPrice;
+    const nodesIncluded=Math.floor(n/50);
+    const zplsValueSaved=nodesIncluded*4000;
+    const bonusLicenses=Math.floor(n*0.2);
+    const alaCarteBase=rec.name.includes('Premier')?350:rec.name.includes('Plus')?300:220;
+    const alaCarteTotal=(n*alaCarteBase)+(zplsNodes*4000);
+    const elaTotalWithPremier=n*elaPremierPrice;
+    const savings=alaCarteTotal-elaTotal;
+    elaAdvisory=`<div class="result-card" style="border-left-color:#7C3AED">
+      <h3>💡 Enterprise ELA Opportunity</h3>
+      <p style="font-size:13px;color:#666;margin-bottom:12px">With ${n} users and ${zplsNodes} ZPLS nodes, consider the <strong>Enterprise ELA</strong> for significant cost savings and operational simplicity.</p>
+      <div class="callout callout-green"><strong>ELA Bundle Includes (50:1 ratio):</strong><br>
+        • ${n} licenses → <strong>${nodesIncluded} Zoom Nodes + ${nodesIncluded} Phone Hybrid (ZPLS)</strong> included at no extra cost<br>
+        • <strong>+${bonusLicenses} bonus licenses</strong> (20% overage for expansion — buy ${n}, get ${n+bonusLicenses})<br>
+        • Flat pricing — no amendment orders for future expansion<br>
+        • 3-year term locks in rate</div>
+      <div style="margin-top:12px;display:grid;grid-template-columns:1fr 1fr;gap:12px">
+        <div class="callout callout-amber" style="margin:0"><strong>A La Carte (current config):</strong><br>
+          ${n} × ${fmt$(alaCarteBase)} (${rec.name.replace('Zoom Workplace ','')})<br>
+          + ${zplsNodes} ZPLS nodes × $4,000<br>
+          <strong style="font-size:15px">= ${fmt$(alaCarteTotal)}/yr</strong></div>
+        <div class="callout callout-green" style="margin:0"><strong>Enterprise ELA:</strong><br>
+          ${n} × $240 (includes ${nodesIncluded} Nodes/ZPLS)<br>
+          + ${bonusLicenses} bonus licenses free<br>
+          <strong style="font-size:15px">= ${fmt$(elaTotal)}/yr</strong><br>
+          ${zplsNodes<=nodesIncluded?'<span style="color:#2DB87D">✅ All '+zplsNodes+' ZPLS nodes covered by bundle</span>':'<span style="color:#b87a00">⚠️ '+zplsNodes+' nodes needed, '+nodesIncluded+' included — '+(zplsNodes-nodesIncluded)+' extra at $4K each</span>'}</div>
+      </div>
+      ${savings>0?'<div class="callout callout-green" style="margin-top:12px"><strong>Estimated Savings: '+fmt$(savings)+'/yr</strong> vs. a la carte configuration'+(zplsNodes<=nodesIncluded?' (all ZPLS nodes absorbed into ELA bundle)':'')+'. Over 3-year term: <strong>'+fmt$(savings*3)+' total savings</strong>.</div>':''}
+      <div style="margin-top:12px;font-size:12px;color:#666">
+        <strong>ELA Requirements:</strong> 250 license minimum | 3-year term | Annual or 3-Year Prepay billing only | SOF (Service Order Form) required — engage Zoom Sales<br>
+        <strong>SKUs:</strong> Z1-ENT-ELA-1YP ($240/user/yr) or Z1-ENT-ELAPS-1YP ($264/user/yr with Premier Support)<br>
+        <strong>Key Ratios:</strong> Zoom Node Basic = 50:1 | Zoom Node Phone Hybrid (ZPLS) = 50:1 | +20% bonus licenses
+      </div>
+    </div>`;
+  } else if(!isPhoneOnly&&n>=250&&formData.zpls){
+    // Lighter hint for 1-2 nodes
+    flags.push({type:'blue',text:'💡 ELA Tip: Enterprise ELA ($240/user/yr) includes Zoom Node + Phone Hybrid at a 50:1 ratio. At '+n+' users, that would be '+Math.floor(n/50)+' ZPLS nodes included. Consider ELA if multi-site survivability is a priority. Requires 3-year term + SOF.'});
+  } else if(!isPhoneOnly&&n>=250&&!formData.zpls){
+    // General ELA awareness for large deals
+    flags.push({type:'blue',text:'💡 250+ users qualifies for Enterprise ELA ($240/user/yr) — flat pricing, +20% bonus licenses, no amendment orders for expansion. Includes Zoom Node + ZPLS at 50:1 ratio. 3-year term required.'});
+  }
 
   const planCard=(p,primary)=>{
     const feats=[];
@@ -1230,7 +989,12 @@ function renderResults(){
       if(p.phone_included&&p.phone_included.unlimited_regional) feats.push('Phone: Unlimited regional included');
       else if(p.phone_included&&p.phone_included.phone_pro) feats.push('Phone: Phone Pro included');
       if(p.features&&p.features.webinars) feats.push(`Webinars: ${p.features.webinars}`);
-      if(p.features&&p.features.zoom_rooms) feats.push(`Rooms: ${p.features.zoom_rooms}`);
+      if(p.features&&p.features.zoom_rooms){
+        const roomsRatio=p.features.zoom_rooms;
+        if(roomsRatio.includes('25:1')||roomsRatio.includes('(25)')) feats.push('Rooms: 1 per 25 licenses (25:1 ratio)');
+        else if(roomsRatio.includes('1:1')||roomsRatio.includes('(1)')) feats.push('Rooms: 1 per license (1:1 ratio)');
+        else feats.push('Rooms: '+roomsRatio);
+      }
       if(p.features&&p.features.sso_branding) feats.push('SSO / Branding');
       if(p.features&&p.features.workspace_reservation) feats.push('Workspace Reservation');
       if(p.features&&p.features.customer_managed_key) feats.push('CMK');
@@ -1243,15 +1007,30 @@ function renderResults(){
       feats.push(p.best_for);feats.push('Channel-eligible');feats.push('Includes: Team Chat, SMS/MMS, Voicemail, IVR, Call Queues');
     }
     const pricing=isPhoneOnly?p:getPricingKey(p,formData.region);
-    const annualPrice=pricing?(isPhoneOnly?p.annual:pricing.annual):0;
-    const monthlyPrice=pricing?(isPhoneOnly?p.monthly:pricing.monthly):null;
-    let priceDisplay=fmt$(annualPrice)+'/user/yr';
-    if(monthlyPrice!==null) priceDisplay+=' <span class="price-monthly">('+fmt$(monthlyPrice)+'/user/mo)</span>';
-    if(!pricing) priceDisplay='Contact for pricing';
+    const unitPrice=pricing?(isPhoneOnly?p.price:pricing.price):0;
+    const priceDisplay=pricing?(formData.billingTerm==='Monthly'?fmt$(unitPrice)+'/user/mo <span style="font-size:12px;color:#666">('+fmt$(unitPrice*12)+'/yr)</span>':fmt$(unitPrice)+'/user/yr <span style="font-size:12px;color:#666">('+fmt$(unitPrice/12)+'/mo)</span>'):'Contact for pricing';
+    // Phone upgrade cost info for alternatives
+    const needsUnlimited=formData.phone&&formData.phoneType&&!formData.phoneType.includes('Metered')&&!formData.phoneType.includes('PAYG');
+    const planHasProOnly=p.phone_included&&p.phone_included.phone_pro&&!p.phone_included.unlimited_regional;
+    let phoneUpgradeNote='';
+    if(!isPhoneOnly&&!primary&&needsUnlimited&&planHasProOnly){
+      const upg=getPhoneUpgradeKey();
+      const upgPrice=upg?upg.price:84;
+      const upgSku=upg?upg.sku:'Z1-ZP-*-UN-1-1YP';
+      const phoneUsers=parseInt(formData.phoneUsers)||n;
+      const effectivePerUser=unitPrice+upgPrice;
+      const totalWithUpgrade=(unitPrice*n)+(upgPrice*phoneUsers);
+      phoneUpgradeNote=`<div class="callout callout-amber" style="margin-top:10px;font-size:12px">
+        <strong>⚠️ Unlimited Calling Add-on Required:</strong> This plan includes Phone Pro only.<br>
+        <strong>Add:</strong> Zoom Workplace Unlimited Calling (${upgSku}) at <strong>${fmt$(upgPrice)}/user/yr</strong><br>
+        <strong>Effective cost:</strong> ${fmt$(unitPrice)} base + ${fmt$(upgPrice)} calling = <strong>${fmt$(effectivePerUser)}/user/yr</strong> for phone users<br>
+        ${phoneUsers<n?`<strong>Scenario:</strong> ${n} base licenses × ${fmt$(unitPrice)} + ${phoneUsers} phone users × ${fmt$(upgPrice)} = <strong>${fmt$(totalWithUpgrade)}/yr total</strong><br><em>💡 Only ${phoneUsers} users need the calling add-on — not all ${n}.</em>`:`<strong>Total:</strong> ${n} users × ${fmt$(effectivePerUser)} = <strong>${fmt$(totalWithUpgrade)}/yr</strong>`}
+      </div>`;
+    }
     return `<div class="result-card ${primary?'':'alt'}">
       <div style="display:flex;justify-content:space-between;align-items:flex-start;flex-wrap:wrap">
         <h3>${isPhoneOnly?p.name:p.name} ${primary?'<span class="badge badge-green">Recommended</span>':''}</h3>
-        <span class="price-tag">${priceDisplay}</span>
+        <span class="price-tag">${priceDisplay} MSRP</span>
       </div>
       <p style="font-size:13px;color:#666;margin-bottom:8px">${isPhoneOnly?p.best_for:p.best_for}</p>
       <div style="display:flex;gap:8px;flex-wrap:wrap;margin-bottom:10px">
@@ -1261,22 +1040,28 @@ function renderResults(){
       </div>
       <ul style="font-size:13px;padding-left:18px;color:#333">${feats.map(f=>`<li>${f}</li>`).join('')}</ul>
       ${primary?`<div class="callout callout-green" style="margin-top:12px"><strong>Why:</strong> ${why}</div>`:''}
+      ${phoneUpgradeNote}
     </div>`;
   };
 
-  // Build table with annual + monthly columns
-  const moHeader=hasAnyMonthly?'<th>Monthly</th>':'';
   const tableRows=lines.map(l=>{
-    const annualCell=typeof l.annual==='number'?fmt$(l.annual):'—';
-    const totalCell=typeof l.total==='number'&&l.total>0?fmt$(l.total)+'/yr':(l.total===0&&typeof l.annual==='number'?'$0 (incl.)':'—');
-    const moCell=hasAnyMonthly?(l.monthly!==null&&l.monthly!==undefined?fmt$(l.monthly):'—'):'';
-    const moTotalCell=hasAnyMonthly?(l.totalMo!==null&&l.totalMo!==undefined&&l.totalMo>0?fmt$(l.totalMo)+'/mo':(l.totalMo===0?'$0 (incl.)':'—')):'';
-    return `<tr><td>${l.item}</td><td style="font-size:11px;font-family:monospace">${l.sku}</td><td>${l.plan}</td><td>${typeof l.qty==='number'?l.qty:l.qty}</td><td>${annualCell}</td><td style="font-weight:600">${totalCell}</td>${hasAnyMonthly?'<td>'+moCell+'</td><td style="font-weight:600">'+moTotalCell+'</td>':''}<td style="font-size:12px">${l.notes}</td></tr>`;
+    let unitMo='—',unitYr='—',totalDisplay='—';
+    if(typeof l.price==='number'){
+      if(formData.billingTerm==='Monthly'){
+        unitMo=fmt$(l.price)+'/mo';
+        unitYr=fmt$(l.price*12)+'/yr';
+      } else {
+        unitYr=fmt$(l.price)+'/yr';
+        unitMo=fmt$(l.price/12)+'/mo';
+      }
+    }
+    if(typeof l.total==='number'&&l.total>0){
+      if(formData.billingTerm==='Monthly') totalDisplay=fmt$(l.total)+'/mo<br><span style="font-size:11px;color:#666">'+fmt$(l.total*12)+'/yr</span>';
+      else totalDisplay=fmt$(l.total)+'/yr<br><span style="font-size:11px;color:#666">'+fmt$(l.total/12)+'/mo</span>';
+    } else if(l.total===0&&typeof l.price==='number') totalDisplay='$0 (incl.)';
+    return `<tr><td>${l.item}</td><td style="font-size:11px;font-family:monospace">${l.sku}</td><td>${l.plan}</td><td>${typeof l.qty==='number'?l.qty:l.qty}</td><td style="white-space:nowrap"><strong>${unitMo}</strong><br><span style="font-size:11px;color:#666">${unitYr}</span></td><td style="font-weight:600">${totalDisplay}</td><td style="font-size:12px">${l.notes}</td></tr>`;
   }).join('');
   const flagsHtml=flags.map(f=>`<div class="callout callout-${f.type}">${f.text}</div>`).join('');
-
-  const totalMoDisplay=hasAnyMonthly?` <span class="price-monthly">(${fmt$(totalMonthly)}/mo)</span>`:'';
-  const moTotalFooter=hasAnyMonthly?`<td>${fmt$(totalMonthly)}/mo</td><td></td>`:'';
 
   const dealRegHtml=`<div class="result-card">
     <h3>Deal Registration Guidance</h3>
@@ -1296,26 +1081,25 @@ function renderResults(){
 
   return `
   <div class="result-card"><h3>Configuration: ${esc(formData.customerName)||'Customer'}</h3>
-    <p style="font-size:12px;color:#666">Generated ${new Date().toLocaleDateString()} | ${n} users | ${formData.region} ${isPhoneOnly?'| PHONE ONLY':''} ${formData.regulatedIndustry?'| ⚠️ REGULATED':''}
-    ${formData.partnerName?' | Partner: '+esc(formData.partnerName):''}
-    | Price List: ${priceListState.version}${priceListState.hasMonthly?' (incl. monthly)':' (annual only)'}</p>
+    <p style="font-size:12px;color:#666">Generated ${new Date().toLocaleDateString()} | ${n} users | ${formData.region} | ${formData.billingTerm} ${isPhoneOnly?'| PHONE ONLY':''} ${formData.regulatedIndustry?'| ⚠️ REGULATED':''}
+    ${formData.partnerName?' | Partner: '+esc(formData.partnerName):''}</p>
   </div>
   <h2 style="margin:20px 0 12px">${isPhoneOnly?'Recommended Phone Plan':'Recommended Bundle'}</h2>
   ${planCard(rec,true)}
   ${alts.length?'<h3 style="margin:16px 0 8px;color:#666">Alternatives</h3>'+alts.map(a=>planCard(a,false)).join(''):''}
   ${flagsHtml}
   <h2 style="margin:24px 0 12px">Itemized Configuration & Pricing</h2>
-  <div class="result-card"><div class="table-wrap"><table><thead><tr><th>Line Item</th><th>SKU</th><th>Plan</th><th>Qty</th><th>Unit/Yr</th><th>Annual Total</th>${hasAnyMonthly?'<th>Unit/Mo</th><th>Monthly Total</th>':''}<th>Notes</th></tr></thead><tbody>${tableRows}</tbody>
-  <tfoot><tr style="font-weight:700;background:#f0f6ff"><td colspan="4">ESTIMATED TOTAL (MSRP)</td><td></td><td>${fmt$(totalAnnual)}/yr</td>${moTotalFooter}<td>Before discount</td></tr></tfoot></table></div>
-  ${!priceListState.hasMonthly?'<p style="font-size:11px;color:#999;margin-top:8px">* Monthly pricing not available. Upload a price list CSV with monthly data to see monthly rates. <a href="#" onclick="showUploadModal();return false" style="color:#0B5CFF">Upload CSV →</a></p>':'<p style="font-size:11px;color:#999;margin-top:8px">* Pricing from '+priceListState.version+' Channel Price List (MSRP). Monthly prices are explicit from the sheet, not calculated.</p>'}
-  </div>
+  <div class="result-card"><div class="table-wrap"><table><thead><tr><th>Line Item</th><th>SKU</th><th>Plan</th><th>Qty</th><th>Unit Price<br><span style="font-size:10px;font-weight:400;color:#666">monthly / annual</span></th><th>Total<br><span style="font-size:10px;font-weight:400;color:#666">${formData.billingTerm==='Monthly'?'monthly + annual':'annual + monthly'}</span></th><th>Notes</th></tr></thead><tbody>${tableRows}</tbody>
+  <tfoot><tr style="font-weight:700;background:#f0f6ff"><td colspan="5">ESTIMATED TOTAL (MSRP)</td><td>${formData.billingTerm==='Monthly'?fmt$(totalAnnual)+'/mo<br><span style="font-size:12px;color:#333">'+fmt$(totalAnnual*12)+'/yr</span>':fmt$(totalAnnual)+'/yr<br><span style="font-size:12px;color:#333">'+fmt$(totalAnnual/12)+'/mo</span>'}</td><td>Before discount</td></tr></tfoot></table></div>
+  <p style="font-size:11px;color:#999;margin-top:8px">* MSRP from May 2026 Channel Price List. ${formData.billingTerm==="Monthly"?"Monthly SKUs shown — actual monthly rates from price list (not annual÷12).":"Annual pricing shown."} Partner cost depends on tier discount, deal reg, and volume.</p></div>
+  ${formData.needsFax&&formData.phone?faxAdvisory:''}
+  ${elaAdvisory}
   ${dealRegHtml}
   <div class="result-card no-print"><h3>Export & Tools</h3>
     <div class="export-btns">
       <button class="btn btn-primary" onclick="window.print()">&#128438; Print / PDF</button>
       <button class="btn btn-secondary" onclick="copyToClipboard()">&#128203; Copy Summary</button>
       <button class="btn btn-secondary" onclick="showPlanComparison()">&#128200; Compare All Plans</button>
-      <button class="btn btn-secondary" onclick="showUploadModal()">🔄 Update Prices</button>
       <button class="btn btn-secondary" onclick="resetAll()">&#8634; New Config</button>
     </div>
   </div>`;
@@ -1325,69 +1109,79 @@ function copyToClipboard(){
   const {rec,why}=getRecommendation();
   const n=parseInt(formData.totalUsers)||1;
   const isPhoneOnly=formData.phoneOnly&&formData.phone;
-  let txt=`ZOOM ${isPhoneOnly?'PHONE':'WORKPLACE'} DEAL CONFIGURATION\n${'='.repeat(50)}\n`;
+  let txt=`ZOOM ${isPhoneOnly?'PHONE':'WORKPLACE'} DEAL CONFIGURATION (${formData.billingTerm})\n${'='.repeat(50)}\n`;
   txt+=`Customer: ${formData.customerName}\nUsers: ${n} | Region: ${formData.region} | Vertical: ${formData.vertical}\n`;
   txt+=`Partner: ${formData.partnerName||'—'} | Timeline: ${formData.timeline}\n`;
   if(formData.incumbent) txt+=`Displacing: ${formData.incumbent}\n`;
   if(formData.regulatedIndustry) txt+=`⚠️ REGULATED INDUSTRY\n`;
-  txt+=`\n--- RECOMMENDED PLAN ---\n${rec.name} (${isPhoneOnly?'Phone Only':rec.tier})\n`;
+  txt+=`\n--- RECOMMENDED PLAN ---\n${isPhoneOnly?rec.name:rec.name} (${isPhoneOnly?'Phone Only':rec.tier})\n`;
   const basePricing=isPhoneOnly?rec:getPricingKey(rec,formData.region);
-  if(basePricing){
-    txt+=`MSRP: ${fmt$(isPhoneOnly?rec.annual:basePricing.annual)}/user/yr`;
-    const mo=isPhoneOnly?rec.monthly:basePricing.monthly;
-    if(mo!==null) txt+=` (${fmt$(mo)}/user/mo)`;
-    txt+='\n';
-  }
+  if(basePricing) txt+=`MSRP: ${isPhoneOnly?fmt$(rec.price):fmt$(basePricing.price)}/user/yr\n`;
   txt+=`Channel: Yes | Min Qty: ${isPhoneOnly?'1':rec.min_quantity}\n`;
   if(!isPhoneOnly) txt+=`Meeting Cap: ${rec.meeting_capacity}\n`;
   txt+=`\n--- PRICING BREAKDOWN ---\n`;
-  let totalAnnual=0;let totalMonthly=0;let hasAnyMo=false;
+  // Rebuild line items for clipboard (simplified)
+  let totalAnnual=0;
   if(isPhoneOnly){
     const pqty=parseInt(formData.phoneUsers)||n;
-    txt+=`${rec.name}: ${pqty} users × ${fmt$(rec.annual)} = ${fmt$(rec.annual*pqty)}/yr`;
-    if(rec.monthly!==null){txt+=` (${fmt$(rec.monthly*pqty)}/mo)`;totalMonthly+=rec.monthly*pqty;hasAnyMo=true;}
-    txt+='\n';totalAnnual+=rec.annual*pqty;
+    txt+=`${rec.name}: ${pqty} users × ${fmt$(rec.price)} = ${fmtTotal(rec.price,pqty)}\n`;
+    totalAnnual+=rec.price*pqty;
   } else {
-    const bp=basePricing?basePricing.annual:0;const bm=basePricing?basePricing.monthly:null;
-    txt+=`${rec.name}: ${n} users × ${fmt$(bp)} = ${fmt$(bp*n)}/yr`;
-    if(bm!==null){txt+=` (${fmt$(bm*n)}/mo)`;totalMonthly+=bm*n;hasAnyMo=true;}
-    txt+='\n';totalAnnual+=bp*n;
+    const bp=basePricing?basePricing.price:0;
+    txt+=`${rec.name}: ${n} users × ${fmt$(bp)} = ${fmtTotal(bp,n)}\n`;
+    totalAnnual+=bp*n;
     if(formData.phone){
       const pqty=parseInt(formData.phoneUsers)||n;
       if(rec.phone_included.unlimited_regional) txt+=`Phone (Unlimited): INCLUDED\n`;
       else if(rec.phone_included.phone_pro){
         const unlimited=formData.phoneType&&!formData.phoneType.includes('Metered');
-        if(unlimited){const u=getPhoneUpgradeKey();const up=u?u.annual:84;const um=u?u.monthly:null;txt+=`Phone Upgrade to Unlimited: ${pqty} × ${fmt$(up)} = ${fmt$(up*pqty)}/yr`;if(um!==null){txt+=` (${fmt$(um*pqty)}/mo)`;totalMonthly+=um*pqty;hasAnyMo=true;}txt+='\n';totalAnnual+=up*pqty;}
+        if(unlimited){const u=getPhoneUpgradeKey();const up=u?u.price:84;txt+=`Phone Upgrade to Unlimited: ${pqty} × ${fmt$(up)} = ${fmtTotal(up,pqty)}\n`;totalAnnual+=up*pqty;}
         else txt+=`Phone Pro: INCLUDED\n`;
-      } else {const ph=getPhonePricingKey();const pp=ph?ph.annual:0;const pm=ph?ph.monthly:null;txt+=`Phone Add-on: ${pqty} × ${fmt$(pp)} = ${fmt$(pp*pqty)}/yr`;if(pm!==null){txt+=` (${fmt$(pm*pqty)}/mo)`;totalMonthly+=pm*pqty;hasAnyMo=true;}txt+='\n';totalAnnual+=pp*pqty;}
+      } else {const ph=getPhonePricingKey();const pp=ph?ph.price:0;txt+=`Phone Add-on: ${pqty} × ${fmt$(pp)} = ${fmtTotal(pp,pqty)}\n`;totalAnnual+=pp*pqty;}
     }
   }
-  if(formData.powerPack){const q=parseInt(formData.powerPackUsers)||parseInt(formData.phoneUsers)||n;const inc=!isPhoneOnly&&rec.phone_included&&rec.phone_included.powerpack;if(inc)txt+=`Power Pack: INCLUDED\n`;else{const pp=PRICING['Zoom Phone Power Pack'];txt+=`Power Pack: ${q} × ${fmt$(pp.annual)} = ${fmt$(pp.annual*q)}/yr`;if(pp.monthly!==null){txt+=` (${fmt$(pp.monthly*q)}/mo)`;totalMonthly+=pp.monthly*q;hasAnyMo=true;}txt+='\n';totalAnnual+=pp.annual*q;}}
-  if(formData.intlCalling){const q=parseInt(formData.intlCallingUsers)||parseInt(formData.phoneUsers)||n;const ic=PRICING['Zoom Phone Intl Unlimited'];txt+=`Intl Calling: ${q} × ${fmt$(ic.annual)} = ${fmt$(ic.annual*q)}/yr`;if(ic.monthly!==null){txt+=` (${fmt$(ic.monthly*q)}/mo)`;totalMonthly+=ic.monthly*q;hasAnyMo=true;}txt+='\n';totalAnnual+=ic.annual*q;}
-  if(formData.zpls){const q=parseInt(formData.zplsQty)||1;const zp=PRICING['Zoom Phone Hybrid (ZPLS)'];txt+=`ZPLS (Phone Hybrid): ${q} node(s) × ${fmt$(zp.annual)} = ${fmt$(zp.annual*q)}/yr`;if(zp.monthly!==null){txt+=` (${fmt$(zp.monthly*q)}/mo)`;totalMonthly+=zp.monthly*q;hasAnyMo=true;}txt+='\n';totalAnnual+=zp.annual*q;}
-  if(formData.commonArea){const q=parseInt(formData.commonAreaQty)||1;const inc=!isPhoneOnly&&rec.phone_included&&rec.phone_included.common_area;if(inc)txt+=`Common Area (${q}): INCLUDED\n`;else{const ca=PRICING['Zoom Phone Common Area'];txt+=`Common Area: ${q} × ${fmt$(ca.annual)} = ${fmt$(ca.annual*q)}/yr`;if(ca.monthly!==null){txt+=` (${fmt$(ca.monthly*q)}/mo)`;totalMonthly+=ca.monthly*q;hasAnyMo=true;}txt+='\n';totalAnnual+=ca.annual*q;}}
-  if(formData.rooms){const q=parseInt(formData.roomsQty)||1;const inc=!isPhoneOnly&&rec.features&&rec.features.zoom_rooms;if(inc)txt+=`Rooms (${q}): INCLUDED\n`;else{const rm=PRICING['Zoom Rooms'];txt+=`Rooms: ${q} × ${fmt$(rm.annual)} = ${fmt$(rm.annual*q)}/yr`;if(rm.monthly!==null){txt+=` (${fmt$(rm.monthly*q)}/mo)`;totalMonthly+=rm.monthly*q;hasAnyMo=true;}txt+='\n';totalAnnual+=rm.annual*q;}}
-  if(formData.webinars){const q=parseInt(formData.webinarHosts)||1;const inc=!isPhoneOnly&&rec.features&&rec.features.webinars;if(inc)txt+=`Webinar: INCLUDED (${rec.features.webinars})\n`;else{let wKey='Webinar 500';if(formData.webinarAudience.includes('1000'))wKey='Webinar 1000';const wp=PRICING[wKey];txt+=`Webinar: ${q} hosts × ${fmt$(wp.annual)} = ${fmt$(wp.annual*q)}/yr`;if(wp.monthly!==null){txt+=` (${fmt$(wp.monthly*q)}/mo)`;totalMonthly+=wp.monthly*q;hasAnyMo=true;}txt+='\n';totalAnnual+=wp.annual*q;}}
-  if(formData.zra){const q=parseInt(formData.phoneUsers)||n;const zra=PRICING['ZRA + Phone US/CA Unlimited'];txt+=`ZRA: ${q} × ${fmt$(zra.annual)} = ${fmt$(zra.annual*q)}/yr`;if(zra.monthly!==null){txt+=` (${fmt$(zra.monthly*q)}/mo)`;totalMonthly+=zra.monthly*q;hasAnyMo=true;}txt+='\n';totalAnnual+=zra.annual*q;}
+  if(formData.powerPack){const q=parseInt(formData.powerPackUsers)||parseInt(formData.phoneUsers)||n;const inc=!isPhoneOnly&&rec.phone_included&&rec.phone_included.powerpack;if(inc)txt+=`Power Pack: INCLUDED\n`;else{txt+=`Power Pack: ${q} × ${fmt$(300)} = ${fmtTotal(300,q)}\n`;totalAnnual+=300*q;}}
+  if(formData.intlCalling){const q=parseInt(formData.intlCallingUsers)||parseInt(formData.phoneUsers)||n;txt+=`Intl Calling: ${q} × ${fmt$(120)} = ${fmtTotal(120,q)}\n`;totalAnnual+=120*q;}
+  if(formData.zpls){const q=parseInt(formData.zplsQty)||1;txt+=`ZPLS (Phone Hybrid): ${q} node(s) × ${fmt$(4000)} = ${fmtTotal(4000,q)}\n`;totalAnnual+=4000*q;}
+  if(formData.commonArea){const q=parseInt(formData.commonAreaQty)||1;const inc=!isPhoneOnly&&rec.phone_included&&rec.phone_included.common_area;if(inc)txt+=`Common Area (${q}): INCLUDED\n`;else{txt+=`Common Area: ${q} × ${fmt$(48)} = ${fmtTotal(48,q)}\n`;totalAnnual+=48*q;}}
+  if(formData.rooms){const q=parseInt(formData.roomsQty)||1;const inc=!isPhoneOnly&&rec.features&&rec.features.zoom_rooms;if(inc)txt+=`Rooms (${q}): INCLUDED\n`;else{txt+=`Rooms: ${q} × ${fmt$(499)} = ${fmtTotal(499,q)}\n`;totalAnnual+=499*q;}}
+  if(formData.webinars){const q=parseInt(formData.webinarHosts)||1;const inc=!isPhoneOnly&&rec.features&&rec.features.webinars;if(inc)txt+=`Webinar: INCLUDED (${rec.features.webinars})\n`;else{let p=1000;if(formData.webinarAudience.includes('1000'))p=3400;txt+=`Webinar: ${q} hosts × ${fmt$(p)} = ${fmtTotal(p,q)}\n`;totalAnnual+=p*q;}}
+  if(formData.zra){const q=parseInt(formData.phoneUsers)||n;txt+=`ZRA: ${q} × ${fmt$(696)} = ${fmtTotal(696,q)}\n`;totalAnnual+=696*q;}
+  if(formData.zva){
+    const zvaTierKey='ZVA '+formData.zvaTier;const zvaP=PRICING[zvaTierKey];
+    if(zvaP) txt+=`ZVA (${formData.zvaTier}): 1 × ${fmt$(zvaP.price)} = ${fmt$(zvaP.price)}/yr\n`;
+    else txt+=`ZVA: ${formData.zvaTier||'TBD'} — select tier for pricing\n`;
+    if(zvaP) totalAnnual+=zvaP.price;
+    if(formData.zvaVoice){const v=parseInt(formData.zvaVoiceVolume)||0;const a=v*12*0.25;txt+=`ZVA Voice: ${v}/mo × $0.25 × 12 = ${fmt$(a)}/yr\n`;totalAnnual+=a;}
+    if(formData.zvaChat){const c=parseInt(formData.zvaChatVolume)||0;const a=c*12*0.40;txt+=`ZVA Chat: ${c}/mo × $0.40 × 12 = ${fmt$(a)}/yr\n`;totalAnnual+=a;}
+  }
   if(formData.zcc) txt+=`Contact Center: Separate ZCC quote required\n`;
+  if(formData.needsFax&&formData.phone){
+    const region=formData.region;
+    if(region==='Japan'){txt+=`Online Fax: NOT AVAILABLE (Japan/India excluded)\n`;}
+    else{
+      const planName=rec.name||'';const pUsers=parseInt(formData.phoneUsers)||n;
+      if(planName.includes('Business Plus')||planName.includes('Enterprise Premier')){txt+=`Online Fax: UNLIMITED domestic (direct numbers) + ${pUsers*50} pooled pages/mo for AR/CQ/SLG\n`;}
+      else if(formData.phoneType&&!formData.phoneType.includes('Metered')){txt+=`Online Fax: ${pUsers*50} pages/mo pooled (${pUsers} users × 50). Overage ~$0.05/page\n`;}
+      else{txt+=`Online Fax: Per-page PAYG (~$0.05/page, no included pages on Metered)\n`;}
+    }
+  }
   if(formData.frontline) txt+=`Frontline: Direct-only (not Channel)\n`;
-  txt+=`${'-'.repeat(50)}\nESTIMATED ANNUAL TOTAL: ${fmt$(totalAnnual)}/yr (MSRP, before partner discount)`;
-  if(hasAnyMo) txt+=`\nESTIMATED MONTHLY TOTAL: ${fmt$(totalMonthly)}/mo (from price list, not calculated)`;
-  txt+=`\n\n--- DEAL REG ---\nChannel: Yes | ${!isPhoneOnly&&rec.tier==='Enterprise'?rec.name+' = unique SKU (no combining)':'Combinable across regions'}\n`;
+  txt+=`${'-'.repeat(50)}\nESTIMATED ${formData.billingTerm==='Monthly'?'MONTHLY':'ANNUAL'} TOTAL: ${fmt$(totalAnnual)}${formData.billingTerm==='Monthly'?'/mo':'/yr'} (MSRP, before partner discount)\n`;
+  txt+=`\n--- DEAL REG ---\nChannel: Yes | ${!isPhoneOnly&&rec.tier==='Enterprise'?rec.name+' = unique SKU (no combining)':'Combinable across regions'}\n`;
   if(totalAnnual>=50000) txt+=`$${Math.round(totalAnnual/1000)}K ACV — may qualify for ZoomUp tier advancement\n`;
   txt+=`Register in Partner Portal before customer engages directly.\n`;
-  txt+=`\nPrice List: ${priceListState.version} (${priceListState.source})`;
   txt+=`\nGenerated: ${new Date().toLocaleDateString()} | Zoom Workplace Deal Configurator`;
   navigator.clipboard.writeText(txt).then(()=>alert('Full pricing summary copied!')).catch(()=>{const ta=document.createElement('textarea');ta.value=txt;document.body.appendChild(ta);ta.select();document.execCommand('copy');document.body.removeChild(ta);alert('Copied!');});
 }
 
 function resetAll(){
-  formData={customerName:'',opportunityName:'',totalUsers:'',vertical:'General Business',region:'US/Canada',netNew:'Yes',partnerName:'',notes:'',meetings:false,phone:false,rooms:false,commonArea:false,phoneType:'',phoneOnly:false,byoc:false,webinars:false,zoomEvents:false,zcc:false,zra:false,frontline:false,aiCompanion:false,sso:false,workspaceRes:false,visitorMgmt:false,translation:false,msTeams:false,cmk:false,premierSupport:false,powerPack:false,intlCalling:false,scheduler:false,clipsPlus:false,advMgmt:false,complianceMgr:false,zoomMesh:false,audioConf:false,concurrentMtg:false,additionalDID:false,zpls:false,phoneUsers:'',commonAreaQty:'',roomsQty:'',webinarHosts:'',webinarAudience:'Up to 500',eventModel:'',eventAttendees:'',didQty:'',zplsQty:'',powerPackUsers:'',intlCallingUsers:'',budget:'Medium',timeline:'Standard (30-90 days)',incumbent:'',zvaVoice:false,zvaChat:false,zvaMinutes:'',callQueues:false,callRecording:false,regulatedIndustry:false,hybridWorkspace:false,existingHardware:'',porting:false,crmIntegration:'',e911:false,multiSite:false,siteCount:''};
+  formData={customerName:'',opportunityName:'',totalUsers:'',vertical:'General Business',region:'US/Canada',billingTerm:'Annual',netNew:'Yes',partnerName:'',notes:'',meetings:false,phone:false,rooms:false,commonArea:false,phoneType:'',phoneOnly:false,byoc:false,webinars:false,zoomEvents:false,zcc:false,zra:false,frontline:false,aiCompanion:false,sso:false,workspaceRes:false,visitorMgmt:false,translation:false,msTeams:false,cmk:false,premierSupport:false,powerPack:false,intlCalling:false,scheduler:false,clipsPlus:false,advMgmt:false,complianceMgr:false,zoomMesh:false,audioConf:false,concurrentMtg:false,additionalDID:false,zpls:false,phoneUsers:'',commonAreaQty:'',roomsQty:'',webinarHosts:'',webinarAudience:'Up to 500',eventModel:'',eventAttendees:'',didQty:'',zplsQty:'',powerPackUsers:'',intlCallingUsers:'',budget:'Medium',timeline:'Standard (30-90 days)',incumbent:'',zva:false,zvaTier:'',zvaVoice:false,zvaChat:false,zvaVoiceVolume:'',zvaChatVolume:'',needsFax:false,callQueues:false,callRecording:false,regulatedIndustry:false,hybridWorkspace:false,existingHardware:''};
   currentStep=0;render();window.scrollTo(0,0);
 }
 
 function saveStep(){
-  const fields=['customerName','opportunityName','totalUsers','vertical','region','netNew','partnerName','notes','phoneUsers','commonAreaQty','roomsQty','webinarHosts','webinarAudience','budget','timeline','incumbent','existingHardware','powerPackUsers','intlCallingUsers','didQty','zplsQty','eventModel','eventAttendees','zvaMinutes','crmIntegration','siteCount'];
+  const fields=['customerName','opportunityName','totalUsers','vertical','region','billingTerm','netNew','partnerName','notes','phoneUsers','commonAreaQty','roomsQty','webinarHosts','webinarAudience','budget','timeline','incumbent','existingHardware','powerPackUsers','intlCallingUsers','didQty','zplsQty','eventModel','eventAttendees','zvaTier','zvaVoiceVolume','zvaChatVolume'];
   fields.forEach(f=>{const el=document.getElementById(f);if(el)formData[f]=el.value;});
   const radio=document.querySelector('input[name="phoneType"]:checked');
   if(radio) formData.phoneType=radio.value;
@@ -1411,7 +1205,7 @@ function bindEvents(){
       formData[field]=this.checked;
       this.parentElement.classList.toggle('checked',this.checked);
       if(field==='phone'&&!this.checked){formData.phoneOnly=false;formData.phoneType='';formData.powerPack=false;formData.intlCalling=false;formData.additionalDID=false;formData.zpls=false;}
-      if(field==='phone'||field==='phoneOnly') render();
+      if(field==='phone'||field==='phoneOnly'||field==='zva') render();
     });
   });
   document.querySelectorAll('.radio-item input[type="radio"]').forEach(rb=>{
@@ -1434,28 +1228,27 @@ function showPlanComparison(){
     {label:'Tier',key:'tier'},
     {label:'Min Qty',fn:p=>p.min_quantity},
     {label:'Meeting Capacity',fn:p=>p.meeting_capacity},
-    {label:'MSRP (Annual)',fn:p=>{const pr=getPricingKey(p,formData.region||'US/Canada');return pr?fmt$(pr.annual)+'/yr':'—';}},
-    {label:'MSRP (Monthly)',fn:p=>{const pr=getPricingKey(p,formData.region||'US/Canada');return pr&&pr.monthly!==null?fmt$(pr.monthly)+'/mo':'—';}},
+    {label:'MSRP (USD/user'+getPeriodLabel()+')',fn:p=>{const pr=getPricingKey(p,formData.region||'US/Canada');return pr?fmt$(pr.price)+getPeriodLabel():'—';}},
     {label:'Channel Eligible',fn:p=>'✅ Yes'},
     {label:'PSTN / Phone',fn:p=>{
       if(p.phone_included.unlimited_regional) return '✅ Unlimited Regional INCLUDED';
-      if(p.phone_included.phone_pro) return '⚠️ Phone Pro (metered) INCLUDED — upgrade available';
-      return '❌ NOT included — add-on required';
+      if(p.phone_included.phone_pro) return '⚠️ Phone Pro (metered) INCLUDED — upgrade to Unlimited = +$84/user/yr';
+      return '❌ NOT included — add-on required ($192/user/yr unlimited or $102 metered)';
     }},
-    {label:'Power Pack',fn:p=>p.phone_included.powerpack?'✅ Included':'❌ Add-on'},
-    {label:'Common Area',fn:p=>p.phone_included.common_area?'✅ Included':'❌ Add-on'},
+    {label:'Power Pack',fn:p=>p.phone_included.powerpack?'✅ Included':'❌ Add-on ($300/user/yr)'},
+    {label:'Common Area',fn:p=>p.phone_included.common_area?'✅ Included':'❌ Add-on ($48/device/yr)'},
     {label:'MS Teams Integration',fn:p=>p.phone_included.ms_teams?'✅ Included':'❌ Add-on'},
     {label:'SSO / Branding',fn:p=>p.features.sso_branding?'✅ Included':'❌ Not available'},
     {label:'Webinars',fn:p=>p.features.webinars?'✅ '+p.features.webinars:'❌ Add-on'},
-    {label:'Zoom Rooms',fn:p=>p.features.zoom_rooms?'✅ '+p.features.zoom_rooms:'❌ Add-on'},
-    {label:'Workspace Reservation',fn:p=>p.features.workspace_reservation?'✅ Included':'❌ Add-on'},
-    {label:'Visitor Management',fn:p=>p.features.visitor_management?'✅ Included':'❌ Add-on'},
-    {label:'Live Translation',fn:p=>p.features.translation?'✅ Included':'❌ Add-on'},
-    {label:'Customer Managed Key',fn:p=>p.features.customer_managed_key?'✅ Included':'❌ Add-on'},
+    {label:'Zoom Rooms',fn:p=>{if(!p.features.zoom_rooms) return '❌ Add-on ($499/room/yr)';if(p.features.zoom_rooms.includes('(25)')) return '✅ 1 per 25 licenses (25:1)';if(p.features.zoom_rooms.includes('(1)')) return '✅ 1 per license (1:1)';return '✅ '+p.features.zoom_rooms;}},
+    {label:'Workspace Reservation',fn:p=>p.features.workspace_reservation?'✅ Included':'❌ Add-on ($15/user/yr)'},
+    {label:'Visitor Management',fn:p=>p.features.visitor_management?'✅ Included':'❌ Add-on ($20/loc/yr)'},
+    {label:'Live Translation',fn:p=>p.features.translation?'✅ Included':'❌ Add-on ($50/user/yr)'},
+    {label:'Customer Managed Key',fn:p=>p.features.customer_managed_key?'✅ Included':'❌ Add-on ($40/user/yr)'},
     {label:'Premier Support',fn:p=>p.features.premier_support?'✅ Included':'❌ Add-on'},
-    {label:'Zoom Mesh',fn:p=>p.features.mesh?'✅ Included':'❌ Add-on'},
+    {label:'Zoom Mesh',fn:p=>p.features.mesh?'✅ Included':'❌ Add-on ($3.60/user/yr)'},
     {label:'AI Companion',fn:p=>'✅ Included in all plans'},
-    {label:'ZPLS (Phone Hybrid)',fn:p=>'Add-on — all plans'},
+    {label:'ZPLS (Phone Hybrid)',fn:p=>'Add-on ($4,000/node/yr) — all plans'},
     {label:'Best For',fn:p=>p.best_for}
   ];
   
@@ -1484,16 +1277,15 @@ function showPlanComparison(){
       <h2 style="font-size:18px">Plan Comparison — What's Included</h2>
       <button onclick="document.getElementById('planCompareOverlay').remove()" style="background:#0B5CFF;color:#fff;border:none;border-radius:6px;padding:8px 16px;cursor:pointer;font-weight:600">✕ Close</button>
     </div>
-    <p style="font-size:12px;color:#666;margin-bottom:4px">Scroll horizontally to see all plans. Green = included, Red = add-on required, Amber = partial.</p>
-    <p style="font-size:11px;color:#999;margin-bottom:12px">Price List: ${priceListState.version} | ${priceListState.hasMonthly?'Monthly pricing loaded from sheet':'Monthly pricing: upload CSV to populate'}</p>
+    <p style="font-size:12px;color:#666;margin-bottom:12px">Scroll horizontally to see all plans. Green = included, Red = add-on required, Amber = partial (upgrade available).</p>
     <div style="overflow-x:auto;border:1px solid #e0e0e0;border-radius:8px">
       <table style="min-width:1100px">${tableHtml}</table>
     </div>
     <div style="margin-top:16px;display:flex;gap:12px">
       <button onclick="window.print()" class="btn btn-secondary" style="font-size:12px;padding:8px 16px">Print Comparison</button>
-      <button onclick="showUploadModal()" class="btn btn-secondary" style="font-size:12px;padding:8px 16px">🔄 Update Prices</button>
       <button onclick="document.getElementById('planCompareOverlay').remove()" class="btn btn-primary" style="font-size:12px;padding:8px 16px">Back to Configurator</button>
     </div>
+    <p style="font-size:11px;color:#999;margin-top:12px">* Pricing from May 2026 Channel Price List (MSRP). PSTN calling is NOT included in Enterprise, Enterprise Essentials, or Business base plans — only in Pro Plus, Business Plus, and Enterprise Premier (unlimited) or Enterprise/Enterprise Plus (Phone Pro metered).</p>
   </div>`;
   document.body.appendChild(overlay);
 }
