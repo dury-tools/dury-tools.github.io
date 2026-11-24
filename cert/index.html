@@ -1,0 +1,59 @@
+<!doctype html><html lang="en"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1">
+<meta name="robots" content="noindex,nofollow"><title>Zoom Partner Certification Tracker (Internal)</title><link rel="stylesheet" href="assets/app.css"></head>
+<body><header><div class="logo"><b>zoom</b> Partner Certification Tracker</div><div class="sub">Internal · Zoomies only</div></header>
+<main id="app">
+  <div class="card" id="login" style="max-width:460px;margin:40px auto">
+    <h2>Sign in</h2><p class="small">Use your @zoom.us email and the team passcode. Partners: use the status link your PSE gave you.</p>
+    <form id="f"><p><input id="em" type="email" placeholder="you@zoom.us" required></p>
+    <p><input id="pw" type="password" placeholder="Team passcode" required></p>
+    <button>Open tracker</button> <span id="msg" class="err"></span></form>
+  </div>
+</main>
+<script src="assets/render.js"></script><script src="assets/crypto.js"></script>
+<script>
+const P = {done: 4, active: 3, ready: 2, todo: 1, locked: 0};
+function overview(data) {
+  const app = document.getElementById("app");
+  const opts = data.partners.map((p, i) => `<option value="${i}">${esc(p.partner)}</option>`).join("");
+  app.innerHTML = `${data.drift.length ? `<div class="warnbox">⚠️ Program guide changes detected: ${data.drift.map(esc).join(" ")}</div>` : ""}
+  <div class="card"><div class="row">
+    <div><input id="q" list="pl" placeholder="Search or pick a partner…"><datalist id="pl">${data.partners.map(p => `<option value="${esc(p.partner)}">`).join("")}</datalist></div>
+    <div><select id="ft"><option value="">All tracks</option><option value="phone">Zoom Phone</option><option value="cx">Zoom CX</option><option value="zva">Zoom Virtual Agent</option></select></div>
+    <div><select id="fc"><option value="">Any CAM</option>${[...new Set(data.partners.map(p => p.cam).filter(Boolean))].map(c => `<option>${esc(c)}</option>`).join("")}</select></div>
+    <div><select id="so"><option value="name">Sort: name</option><option value="prog">Sort: furthest along</option></select></div>
+  </div><p class="small">Data refreshed ${esc(data.updated)}. Click a partner for full detail.</p>
+  <table class="grid" id="tb"></table></div><div id="detail"></div>`;
+  const draw = () => {
+    const q = document.getElementById("q").value.toLowerCase(), ft = document.getElementById("ft").value, fc = document.getElementById("fc").value, so = document.getElementById("so").value;
+    const ks = ft ? [ft] : ["phone", "cx", "zva"];
+    let rows = data.partners.map((p, i) => ({p, i, score: ks.reduce((s, k) => s + P[p.tracks[k].phase1.state] * 5 + P[p.tracks[k].phase2.state], 0)}))
+      .filter(r => (!q || r.p.partner.toLowerCase().includes(q)) && (!fc || r.p.cam === fc));
+    rows.sort((a, b) => so === "prog" ? b.score - a.score : a.p.partner.localeCompare(b.p.partner));
+    const cell = ph => `<span class="pill ${ph.state}">${STATE[ph.state]}</span>`;
+    document.getElementById("tb").innerHTML = `<tr><th>Partner</th><th>CAM</th>${ks.map(k => `<th>${esc(data.partners[0].tracks[k].label)} competency</th><th>Deployment</th>`).join("")}<th>Partner link</th></tr>` +
+      rows.map(r => `<tr><td><a href="#" data-i="${r.i}">${esc(r.p.partner)}</a></td><td>${esc(r.p.cam)}</td>${ks.map(k => `<td>${cell(r.p.tracks[k].phase1)}</td><td>${cell(r.p.tracks[k].phase2)}</td>`).join("")}<td><button class="cp" data-t="${esc(r.p.token)}">Copy</button></td></tr>`).join("");
+    document.querySelectorAll("#tb a[data-i]").forEach(a => a.addEventListener("click", e => { e.preventDefault(); openP(+a.dataset.i); }));
+    document.querySelectorAll(".cp").forEach(b => b.addEventListener("click", () => { navigator.clipboard.writeText(new URL("status.html?p=" + b.dataset.t, location.href).href); b.textContent = "Copied ✓"; }));
+  };
+  const openP = i => {
+    const p = data.partners[i];
+    const extra = `<p class="small">Salesforce accounts merged: ${p.accounts.map(a => `${esc(a.name)} (${esc(a.id)})`).join(", ")}</p>`;
+    renderPartner(document.getElementById("detail"), p, extra);
+    document.getElementById("detail").scrollIntoView({behavior: "smooth"});
+  };
+  ["q", "ft", "fc", "so"].forEach(id => document.getElementById(id).addEventListener("input", draw));
+  document.getElementById("q").addEventListener("change", () => { const i = data.partners.findIndex(p => p.partner === document.getElementById("q").value); if (i >= 0) openP(i); });
+  draw();
+}
+document.getElementById("f").addEventListener("submit", async e => {
+  e.preventDefault();
+  const msg = document.getElementById("msg"), em = document.getElementById("em").value.trim().toLowerCase();
+  if (!/@zoom\.(us|com)$/.test(em)) { msg.textContent = "Use your Zoom email."; return; }
+  try {
+    const blob = await (await fetch("data/internal.enc", {cache: "no-store"})).json();
+    const data = await decrypt(blob, document.getElementById("pw").value);
+    sessionStorage.setItem("zpass", document.getElementById("pw").value);
+    overview(data);
+  } catch (err) { msg.textContent = "Wrong passcode."; }
+});
+</script></body></html>
