@@ -23,6 +23,7 @@ function overview(data) {
   const cams = [...new Set(P.map(p => p.cam).filter(Boolean))].sort();
   const count = f => P.filter(p => KS.some(k => f(p.tracks[k]))).length;
   app.innerHTML = `${data.drift.length ? `<div class="drift">⚠️ Program guide change detected: ${data.drift.map(esc).join(" ")}</div>` : ""}
+  ${(data.changes && data.changes.changes && data.changes.changes.length) ? `<div class="card" style="background:#F8FAFF;border-color:#D6E2FF"><b>Changes in the ${esc(data.changes.date)} refresh</b><ul style="margin:8px 0 0">${data.changes.changes.map(c => `<li>${esc(c)}</li>`).join("")}</ul></div>` : ""}
   <div class="kpis">
     <div class="kpi"><b>${P.length}</b><span>Engaged partners</span></div>
     <div class="kpi"><b>${count(t => t.step === 2)}</b><span>With a competency in progress</span></div>
@@ -48,7 +49,7 @@ function overview(data) {
       && (!fs || (ft ? [ft] : KS).some(k => p.tracks[k].step === fs && (fs > 1 || p.tracks[k].comp_ready.length || p.tracks[k].comp_partial.length))));
     const val = (p) => sortKey === "name" ? p.partner.toLowerCase() : sortKey === "cam" ? (p.cam || "~").toLowerCase() : -(p.tracks[sortKey].step * 10 + p.tracks[sortKey].comp_ready.length);
     rows.sort((a, b) => (val(a.p) > val(b.p) ? 1 : val(a.p) < val(b.p) ? -1 : 0) * dir);
-    document.getElementById("tb").innerHTML = rows.map(({p, i}) => `<tr data-i="${i}"><td><b>${esc(p.partner)}</b>${(p.focus || []).length ? ` <span class="badge b-focus">${p.focus.map(k => LBL[k]).join(", ")}</span>` : ""}</td>
+    document.getElementById("tb").innerHTML = rows.map(({p, i}) => `<tr data-i="${i}"><td><b>${esc(p.partner)}</b>${p.confirm_roster ? ' <span class="badge b-todo" title="Not in the roster. Name and Salesforce match were guessed.">Confirm in roster</span>' : ""}${p.added ? ` <span class="badge b-active" title="${esc((p.reasons || []).join("; "))}">New</span>` : ""}<div class="small">${esc((p.reasons || []).join(" · "))}</div>${(p.focus || []).length ? ` <span class="badge b-focus">${p.focus.map(k => LBL[k]).join(", ")}</span>` : ""}</td>
       <td>${esc(p.cam || "Unknown")}</td>${KS.map(k => `<td style="${ft && ft !== k ? "opacity:.35" : ""}">${stepCell(p.tracks[k])}</td>`).join("")}
       <td><button class="ghost cp" data-t="${esc(p.token)}">Copy link</button></td></tr>`).join("") || `<tr><td colspan="6" class="small">No partners match.</td></tr>`;
     document.querySelectorAll("#tb tr[data-i]").forEach(tr => tr.addEventListener("click", e => { if (!e.target.closest(".cp")) openP(+tr.dataset.i); }));
