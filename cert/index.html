@@ -1,48 +1,71 @@
 <!doctype html><html lang="en"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1">
 <meta name="robots" content="noindex,nofollow"><title>Zoom Partner Certification Tracker (Internal)</title><link rel="stylesheet" href="assets/app.css"></head>
-<body><header><div class="logo"><b>zoom</b> Partner Certification Tracker</div><div class="sub">Internal · Zoomies only</div></header>
+<body><header><div class="logo"><b>zoom</b> Partner Certification Tracker</div><div class="sub">Internal · for CAMs, PSEs, and Zoomies</div></header>
 <main id="app">
-  <div class="card" id="login" style="max-width:460px;margin:40px auto">
-    <h2>Sign in</h2><p class="small">Use your @zoom.us email and the team passcode. Partners: use the status link your PSE gave you.</p>
+  <div class="card login" id="login">
+    <h2>Sign in</h2><p class="small">Use your Zoom email and the team passcode. Partners: use the status link from your Tech Hub channel.</p>
     <form id="f"><p><input id="em" type="email" placeholder="you@zoom.us" required></p>
     <p><input id="pw" type="password" placeholder="Team passcode" required></p>
-    <button>Open tracker</button> <span id="msg" class="err"></span></form>
+    <button class="pri" type="submit">Open tracker</button> <span id="msg" class="err"></span></form>
   </div>
 </main>
 <script src="assets/render.js"></script><script src="assets/crypto.js"></script>
 <script>
-const P = {done: 4, active: 3, ready: 2, todo: 1, locked: 0};
+const KS = ["phone", "cx", "zva"], LBL = {phone: "Zoom Phone", cx: "Zoom CX", zva: "Zoom Virtual Agent"};
+function stepCell(t) {
+  const cls = t.step === 4 ? "b-done" : t.step >= 2 ? "b-active" : (t.comp_ready.length || t.comp_partial.length) ? "b-todo" : "b-none";
+  const txt = t.step === 4 ? "Certified" : t.step === 3 ? "3 · Deployment" : t.step === 2 ? "2 · Competency" : (t.comp_ready.length || t.comp_partial.length) ? "1 · Accrediting" : "Not started";
+  return `<span class="badge ${cls}" title="${esc(t.next)}">${txt}</span>`;
+}
 function overview(data) {
   const app = document.getElementById("app");
-  const opts = data.partners.map((p, i) => `<option value="${i}">${esc(p.partner)}</option>`).join("");
-  app.innerHTML = `${data.drift.length ? `<div class="warnbox">⚠️ Program guide changes detected: ${data.drift.map(esc).join(" ")}</div>` : ""}
-  <div class="card"><div class="row">
-    <div><input id="q" list="pl" placeholder="Search or pick a partner…"><datalist id="pl">${data.partners.map(p => `<option value="${esc(p.partner)}">`).join("")}</datalist></div>
-    <div><select id="ft"><option value="">All tracks</option><option value="phone">Zoom Phone</option><option value="cx">Zoom CX</option><option value="zva">Zoom Virtual Agent</option></select></div>
-    <div><select id="fc"><option value="">Any CAM</option>${[...new Set(data.partners.map(p => p.cam).filter(Boolean))].map(c => `<option>${esc(c)}</option>`).join("")}</select></div>
-    <div><select id="so"><option value="name">Sort: name</option><option value="prog">Sort: furthest along</option></select></div>
-  </div><p class="small">Data refreshed ${esc(data.updated)}. Click a partner for full detail.</p>
-  <table class="grid" id="tb"></table></div><div id="detail"></div>`;
+  const P = data.partners;
+  const cams = [...new Set(P.map(p => p.cam).filter(Boolean))].sort();
+  const count = f => P.filter(p => KS.some(k => f(p.tracks[k]))).length;
+  app.innerHTML = `${data.drift.length ? `<div class="drift">⚠️ Program guide change detected: ${data.drift.map(esc).join(" ")}</div>` : ""}
+  <div class="kpis">
+    <div class="kpi"><b>${P.length}</b><span>Engaged partners</span></div>
+    <div class="kpi"><b>${count(t => t.step === 2)}</b><span>With a competency in progress</span></div>
+    <div class="kpi"><b>${count(t => t.step === 3)}</b><span>Working on deployment</span></div>
+    <div class="kpi"><b>${count(t => t.step === 4)}</b><span>Deployment Certified (any track)</span></div>
+  </div>
+  <div class="card" id="listcard">
+    <div class="filters">
+      <input id="q" placeholder="Search partners…">
+      <select id="fc"><option value="">All CAMs</option>${cams.map(c => `<option>${esc(c)}</option>`).join("")}</select>
+      <select id="ft"><option value="">All tracks</option>${KS.map(k => `<option value="${k}">${LBL[k]}</option>`).join("")}</select>
+      <select id="fs"><option value="">Any stage</option><option value="1">Step 1 · Accrediting</option><option value="2">Step 2 · Competency</option><option value="3">Step 3 · Deployment</option><option value="4">Certified</option></select>
+    </div>
+    <div class="small" style="margin-bottom:8px">Data as of ${esc(data.updated)}. Click a row for full detail. Hover a badge to see the next step.</div>
+    <div style="overflow-x:auto"><table class="list"><thead><tr>
+      <th data-s="name">Partner ↕</th><th data-s="cam">CAM ↕</th>${KS.map(k => `<th data-s="${k}">${LBL[k]} ↕</th>`).join("")}<th>Partner link</th></tr></thead><tbody id="tb"></tbody></table></div>
+  </div><div id="detail"></div>`;
+  let sortKey = "name", dir = 1;
   const draw = () => {
-    const q = document.getElementById("q").value.toLowerCase(), ft = document.getElementById("ft").value, fc = document.getElementById("fc").value, so = document.getElementById("so").value;
-    const ks = ft ? [ft] : ["phone", "cx", "zva"];
-    let rows = data.partners.map((p, i) => ({p, i, score: ks.reduce((s, k) => s + P[p.tracks[k].phase1.state] * 5 + P[p.tracks[k].phase2.state], 0)}))
-      .filter(r => (!q || r.p.partner.toLowerCase().includes(q)) && (!fc || r.p.cam === fc));
-    rows.sort((a, b) => so === "prog" ? b.score - a.score : a.p.partner.localeCompare(b.p.partner));
-    const cell = ph => `<span class="pill ${ph.state}">${STATE[ph.state]}</span>`;
-    document.getElementById("tb").innerHTML = `<tr><th>Partner</th><th>CAM</th>${ks.map(k => `<th>${esc(data.partners[0].tracks[k].label)} competency</th><th>Deployment</th>`).join("")}<th>Partner link</th></tr>` +
-      rows.map(r => `<tr><td><a href="#" data-i="${r.i}">${esc(r.p.partner)}</a></td><td>${esc(r.p.cam)}</td>${ks.map(k => `<td>${cell(r.p.tracks[k].phase1)}</td><td>${cell(r.p.tracks[k].phase2)}</td>`).join("")}<td><button class="cp" data-t="${esc(r.p.token)}">Copy</button></td></tr>`).join("");
-    document.querySelectorAll("#tb a[data-i]").forEach(a => a.addEventListener("click", e => { e.preventDefault(); openP(+a.dataset.i); }));
+    const q = document.getElementById("q").value.toLowerCase(), fc = document.getElementById("fc").value,
+          ft = document.getElementById("ft").value, fs = +document.getElementById("fs").value;
+    let rows = P.map((p, i) => ({p, i})).filter(({p}) => (!q || p.partner.toLowerCase().includes(q)) && (!fc || p.cam === fc)
+      && (!fs || (ft ? [ft] : KS).some(k => p.tracks[k].step === fs && (fs > 1 || p.tracks[k].comp_ready.length || p.tracks[k].comp_partial.length))));
+    const val = (p) => sortKey === "name" ? p.partner.toLowerCase() : sortKey === "cam" ? (p.cam || "~").toLowerCase() : -(p.tracks[sortKey].step * 10 + p.tracks[sortKey].comp_ready.length);
+    rows.sort((a, b) => (val(a.p) > val(b.p) ? 1 : val(a.p) < val(b.p) ? -1 : 0) * dir);
+    document.getElementById("tb").innerHTML = rows.map(({p, i}) => `<tr data-i="${i}"><td><b>${esc(p.partner)}</b>${(p.focus || []).length ? ` <span class="badge b-focus">${p.focus.map(k => LBL[k]).join(", ")}</span>` : ""}</td>
+      <td>${esc(p.cam || "Unknown")}</td>${KS.map(k => `<td style="${ft && ft !== k ? "opacity:.35" : ""}">${stepCell(p.tracks[k])}</td>`).join("")}
+      <td><button class="ghost cp" data-t="${esc(p.token)}">Copy link</button></td></tr>`).join("") || `<tr><td colspan="6" class="small">No partners match.</td></tr>`;
+    document.querySelectorAll("#tb tr[data-i]").forEach(tr => tr.addEventListener("click", e => { if (!e.target.closest(".cp")) openP(+tr.dataset.i); }));
     document.querySelectorAll(".cp").forEach(b => b.addEventListener("click", () => { navigator.clipboard.writeText(new URL("status.html?p=" + b.dataset.t, location.href).href); b.textContent = "Copied ✓"; }));
   };
   const openP = i => {
-    const p = data.partners[i];
-    const extra = `<p class="small">Salesforce accounts merged: ${p.accounts.map(a => `${esc(a.name)} (${esc(a.id)})`).join(", ")}</p>`;
-    renderPartner(document.getElementById("detail"), p, extra);
-    document.getElementById("detail").scrollIntoView({behavior: "smooth"});
+    const p = P[i], d = document.getElementById("detail");
+    document.getElementById("listcard").style.display = "none";
+    document.querySelector(".kpis").style.display = "none";
+    const extra = `<p class="small" style="margin-top:10px">Salesforce accounts merged: ${p.accounts.map(a => `${esc(a.name)} (${esc(a.id)})`).join(" · ")}${p.tech_hub ? ` · Tech Hub: ${esc(p.tech_hub)}` : ""}</p>`;
+    d.innerHTML = `<div class="back"><button class="ghost" id="bk">← All partners</button></div><div id="pv"></div>`;
+    renderPartner(document.getElementById("pv"), p, extra);
+    document.getElementById("bk").addEventListener("click", () => { d.innerHTML = ""; document.getElementById("listcard").style.display = ""; document.querySelector(".kpis").style.display = ""; });
+    window.scrollTo({top: 0, behavior: "smooth"});
   };
-  ["q", "ft", "fc", "so"].forEach(id => document.getElementById(id).addEventListener("input", draw));
-  document.getElementById("q").addEventListener("change", () => { const i = data.partners.findIndex(p => p.partner === document.getElementById("q").value); if (i >= 0) openP(i); });
+  document.querySelectorAll("th[data-s]").forEach(th => th.addEventListener("click", () => { dir = sortKey === th.dataset.s ? -dir : 1; sortKey = th.dataset.s; draw(); }));
+  ["q", "fc", "ft", "fs"].forEach(id => document.getElementById(id).addEventListener("input", draw));
   draw();
 }
 document.getElementById("f").addEventListener("submit", async e => {
@@ -51,9 +74,7 @@ document.getElementById("f").addEventListener("submit", async e => {
   if (!/@zoom\.(us|com)$/.test(em)) { msg.textContent = "Use your Zoom email."; return; }
   try {
     const blob = await (await fetch("data/internal.enc", {cache: "no-store"})).json();
-    const data = await decrypt(blob, document.getElementById("pw").value);
-    sessionStorage.setItem("zpass", document.getElementById("pw").value);
-    overview(data);
+    overview(await decrypt(blob, document.getElementById("pw").value));
   } catch (err) { msg.textContent = "Wrong passcode."; }
 });
 </script></body></html>
