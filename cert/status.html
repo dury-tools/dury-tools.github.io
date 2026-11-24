@@ -1,0 +1,18 @@
+<!doctype html><html lang="en"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1">
+<meta name="robots" content="noindex,nofollow"><title>Zoom Certification Status</title><link rel="stylesheet" href="assets/app.css"></head>
+<body><header><div class="logo"><b>zoom</b> Partner Certification Status</div><div class="sub">Zoom Phone · Zoom CX · Zoom Virtual Agent</div></header>
+<main id="app"><div class="card">Loading…</div></main>
+<script src="assets/render.js"></script><script src="assets/crypto.js"></script>
+<script>
+(async () => {
+  const el = document.getElementById("app");
+  const token = new URLSearchParams(location.search).get("p");
+  if (!token || !/^[A-Za-z0-9_-]{16,}$/.test(token)) { el.innerHTML = '<div class="card">This link is missing its partner code. Ask your Zoom Partner Solutions Engineer for your status link.</div>'; return; }
+  try {
+    const h = Array.from(new Uint8Array(await crypto.subtle.digest("SHA-256", new TextEncoder().encode(token)))).map(b => b.toString(16).padStart(2, "0")).join("").slice(0, 32);
+    const r = await fetch("data/p/" + h + ".json", {cache: "no-store"});
+    if (!r.ok) throw new Error();
+    renderPartner(el, await decrypt(await r.json(), token));
+  } catch (e) { el.innerHTML = '<div class="card">We couldn\'t find a status page for this link. Ask your Zoom Partner Solutions Engineer for a fresh one.</div>'; }
+})();
+</script></body></html>
