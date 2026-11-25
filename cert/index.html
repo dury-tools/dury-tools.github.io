@@ -26,6 +26,7 @@ function stalledCell(p) {
   const d = lastProgress(p);
   if (!d) return `<span class="gray-note">No activity</span>`;
   const n = daysAgo(d);
+  if (n > 365) return `<span class="gray-note" title="Last course completion or application: ${esc(fmtDate(d))}">1y+</span>`;
   return `<span class="${n > 30 && KS.some(k => p.tracks[k].pursuing) ? "stale" : ""}" title="Last course completion or application: ${esc(fmtDate(d))}">${n}d</span>`;
 }
 function overview(data) {
