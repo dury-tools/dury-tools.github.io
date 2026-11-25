@@ -13,9 +13,20 @@
 <script>
 const KS = ["phone", "cx", "zva"], LBL = {phone: "Zoom Phone", cx: "Zoom CX", zva: "Zoom Virtual Agent"};
 function stepCell(t) {
-  const cls = t.step === 4 ? "b-done" : t.step >= 2 ? "b-active" : (t.comp_ready.length || t.comp_partial.length) ? "b-todo" : "b-none";
-  const txt = t.step === 4 ? "Certified" : t.step === 3 ? "3 · Deployment" : t.step === 2 ? "2 · Competency" : (t.comp_ready.length || t.comp_partial.length) ? "1 · Accrediting" : "Not started";
-  return `<span class="badge ${cls}" title="${esc(t.next)}">${txt}</span>`;
+  const ph = stagePhrase(t);
+  if (ph) return `<span class="badge ${ph.cls}" title="${esc(t.next)}">${esc(ph.txt)}</span>`;
+  if (t.courses_taken) return `<span class="gray-note" title="${esc(t.next)}">${t.courses_taken} course${t.courses_taken === 1 ? "" : "s"} taken · not applied</span>`;
+  return `<span class="gray-note">—</span>`;
+}
+function lastProgress(p) {
+  const ds = KS.map(k => p.tracks[k].last_progress).filter(Boolean).sort();
+  return ds.length ? ds[ds.length - 1] : null;
+}
+function stalledCell(p) {
+  const d = lastProgress(p);
+  if (!d) return `<span class="gray-note">No activity</span>`;
+  const n = daysAgo(d);
+  return `<span class="${n > 30 && KS.some(k => p.tracks[k].pursuing) ? "stale" : ""}" title="Last course completion or application: ${esc(fmtDate(d))}">${n}d</span>`;
 }
 function overview(data) {
   const app = document.getElementById("app");
@@ -26,32 +37,39 @@ function overview(data) {
   ${(data.changes && data.changes.changes && data.changes.changes.length) ? `<div class="card" style="background:#F8FAFF;border-color:#D6E2FF"><b>Changes in the ${esc(data.changes.date)} refresh</b><ul style="margin:8px 0 0">${data.changes.changes.map(c => `<li>${esc(c)}</li>`).join("")}</ul></div>` : ""}
   <div class="kpis">
     <div class="kpi"><b>${P.length}</b><span>Engaged partners</span></div>
-    <div class="kpi"><b>${count(t => t.step === 2)}</b><span>With a competency in progress</span></div>
-    <div class="kpi"><b>${count(t => t.step === 3)}</b><span>Working on deployment</span></div>
-    <div class="kpi"><b>${count(t => t.step === 4)}</b><span>Deployment Certified (any track)</span></div>
+    <div class="kpi"><b>${count(t => t.step === 2)}</b><span>Applied for a competency</span></div>
+    <div class="kpi"><b>${count(t => t.step === 3)}</b><span>Competency ✓, not yet certified</span></div>
+    <div class="kpi"><b>${count(t => t.step === 4)}</b><span>Deployment Certified 🏆</span></div>
   </div>
   <div class="card" id="listcard">
     <div class="filters">
       <input id="q" placeholder="Search partners…">
       <select id="fc"><option value="">All CAMs</option>${cams.map(c => `<option>${esc(c)}</option>`).join("")}</select>
       <select id="ft"><option value="">All tracks</option>${KS.map(k => `<option value="${k}">${LBL[k]}</option>`).join("")}</select>
-      <select id="fs"><option value="">Any stage</option><option value="1">Step 1 · Accrediting</option><option value="2">Step 2 · Competency</option><option value="3">Step 3 · Deployment</option><option value="4">Certified</option></select>
+      <select id="fs"><option value="">Any stage</option><option value="p">Pursuing (applied or further)</option><option value="1">Courses only · not applied</option><option value="2">Applied for competency</option><option value="3">Competency ✓ · not certified</option><option value="4">Deployment Certified</option><option value="s">Stalled 30+ days</option></select>
     </div>
-    <div class="small" style="margin-bottom:8px">Data as of ${esc(data.updated)}. Click a row for full detail. Hover a badge to see the next step.</div>
+    <div class="key"><span><span class="gray-note">Gray text</span> = courses taken, no application (not pursuing yet)</span><span><span class="badge b-active">Blue</span> = applied, pursuing</span><span><span class="badge b-done">Green 🏆</span> = Deployment Certified only</span><span><span class="stale">Orange days</span> = pursuing, no progress in 30+ days</span></div>
+    <div class="small" style="margin-bottom:8px">Data as of ${esc(data.updated)}. Click a row for full detail. Hover a status to see the partner's next step.</div>
     <div style="overflow-x:auto"><table class="list"><thead><tr>
-      <th data-s="name">Partner ↕</th><th data-s="cam">CAM ↕</th>${KS.map(k => `<th data-s="${k}">${LBL[k]} ↕</th>`).join("")}<th>Partner link</th></tr></thead><tbody id="tb"></tbody></table></div>
+      <th data-s="name">Partner ↕</th><th data-s="cam">CAM ↕</th>${KS.map(k => `<th data-s="${k}">${LBL[k]} ↕</th>`).join("")}<th data-s="last">Last progress ↕</th><th>Partner link</th></tr></thead><tbody id="tb"></tbody></table></div>
   </div><div id="detail"></div>`;
   let sortKey = "name", dir = 1;
   const draw = () => {
     const q = document.getElementById("q").value.toLowerCase(), fc = document.getElementById("fc").value,
-          ft = document.getElementById("ft").value, fs = +document.getElementById("fs").value;
+          ft = document.getElementById("ft").value, fs = document.getElementById("fs").value;
     let rows = P.map((p, i) => ({p, i})).filter(({p}) => (!q || p.partner.toLowerCase().includes(q)) && (!fc || p.cam === fc)
-      && (!fs || (ft ? [ft] : KS).some(k => p.tracks[k].step === fs && (fs > 1 || p.tracks[k].comp_ready.length || p.tracks[k].comp_partial.length))));
-    const val = (p) => sortKey === "name" ? p.partner.toLowerCase() : sortKey === "cam" ? (p.cam || "~").toLowerCase() : -(p.tracks[sortKey].step * 10 + p.tracks[sortKey].comp_ready.length);
+      && (!fs || (ft ? [ft] : KS).some(k => {
+        const t = p.tracks[k];
+        if (fs === "p") return t.pursuing;
+        if (fs === "s") return t.pursuing && daysAgo(lastProgress(p)) > 30;
+        if (fs === "1") return !t.pursuing && t.courses_taken > 0;
+        return t.step === +fs;
+      })));
+    const val = (p) => sortKey === "name" ? p.partner.toLowerCase() : sortKey === "cam" ? (p.cam || "~").toLowerCase() : sortKey === "last" ? daysAgo(lastProgress(p)) : -((p.tracks[sortKey].pursuing ? 100 : 0) + p.tracks[sortKey].step * 10 + (p.tracks[sortKey].courses_taken || 0));
     rows.sort((a, b) => (val(a.p) > val(b.p) ? 1 : val(a.p) < val(b.p) ? -1 : 0) * dir);
     document.getElementById("tb").innerHTML = rows.map(({p, i}) => `<tr data-i="${i}"><td><b>${esc(p.partner)}</b>${p.confirm_roster ? ' <span class="badge b-todo" title="Not in the roster. Name and Salesforce match were guessed.">Confirm in roster</span>' : ""}${p.added ? ` <span class="badge b-active" title="${esc((p.reasons || []).join("; "))}">New</span>` : ""}<div class="small">${esc((p.reasons || []).join(" · "))}</div>${(p.focus || []).length ? ` <span class="badge b-focus">${p.focus.map(k => LBL[k]).join(", ")}</span>` : ""}</td>
       <td>${esc(p.cam || "Unknown")}</td>${KS.map(k => `<td style="${ft && ft !== k ? "opacity:.35" : ""}">${stepCell(p.tracks[k])}</td>`).join("")}
-      <td><button class="ghost cp" data-t="${esc(p.token)}">Copy link</button></td></tr>`).join("") || `<tr><td colspan="6" class="small">No partners match.</td></tr>`;
+      <td>${stalledCell(p)}</td><td><button class="ghost cp" data-t="${esc(p.token)}">Copy link</button></td></tr>`).join("") || `<tr><td colspan="7" class="small">No partners match.</td></tr>`;
     document.querySelectorAll("#tb tr[data-i]").forEach(tr => tr.addEventListener("click", e => { if (!e.target.closest(".cp")) openP(+tr.dataset.i); }));
     document.querySelectorAll(".cp").forEach(b => b.addEventListener("click", () => { navigator.clipboard.writeText(new URL("status.html?p=" + b.dataset.t, location.href).href); b.textContent = "Copied ✓"; }));
   };
