@@ -31,6 +31,7 @@ function stagePhrase(t) {
       passed: internal ? `Demo passed${g ? " · " + g.score : ""}` : "Demo reviewed · Check your email",
       failed: internal ? "Competency failed" : "Demo reviewed · Check your email",
       rejected: internal ? "Application rejected" : "Check your email",
+      reviewed: "Demo reviewed · Check your email",
     }[a.stage] || "Applied";
     const warn = internal && ["resubmit", "failed", "rejected"].includes(a.stage);
     return {cls: warn ? "b-warn" : "b-active", txt};
