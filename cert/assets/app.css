@@ -97,3 +97,5 @@ table.list{width:100%;border-collapse:collapse;font-size:14px}
 .key{display:flex;gap:16px;flex-wrap:wrap;font-size:12.5px;color:var(--mut);margin-bottom:12px;align-items:center}
 .gray-note{font-size:12.5px;color:var(--mut)}
 .stale{color:#B54708;font-weight:700}
+
+.tablewrap{overflow-x:auto}table.list{min-width:1040px}table.list td:first-child{min-width:230px}main{max-width:1240px}
