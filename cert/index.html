@@ -9,7 +9,7 @@
     <button class="pri" type="submit">Open tracker</button> <span id="msg" class="err"></span></form>
   </div>
 </main>
-<script src="assets/render.js"></script><script src="assets/crypto.js"></script>
+<script>window.CERT_INTERNAL = true;</script><script src="assets/render.js"></script><script src="assets/crypto.js"></script>
 <script>
 const KS = ["phone", "cx", "zva"], LBL = {phone: "Zoom Phone", cx: "Zoom CX", zva: "Zoom Virtual Agent"};
 function stepCell(t) {
@@ -69,7 +69,7 @@ function overview(data) {
     const val = (p) => sortKey === "name" ? p.partner.toLowerCase() : sortKey === "cam" ? (p.cam || "~").toLowerCase() : sortKey === "last" ? daysAgo(lastProgress(p)) : -((p.tracks[sortKey].pursuing ? 100 : 0) + p.tracks[sortKey].step * 10 + (p.tracks[sortKey].courses_taken || 0));
     rows.sort((a, b) => (val(a.p) > val(b.p) ? 1 : val(a.p) < val(b.p) ? -1 : 0) * dir);
     document.getElementById("tb").innerHTML = rows.map(({p, i}) => `<tr data-i="${i}"><td><b>${esc(p.partner)}</b>${p.confirm_roster ? ' <span class="badge b-todo" title="Not in the roster. Name and Salesforce match were guessed.">Confirm in roster</span>' : ""}${p.added ? ` <span class="badge b-active" title="${esc((p.reasons || []).join("; "))}">New</span>` : ""}<div class="small">${esc((p.reasons || []).join(" · "))}</div>${(p.focus || []).length ? ` <span class="badge b-focus">${p.focus.map(k => LBL[k]).join(", ")}</span>` : ""}</td>
-      <td>${esc(p.cam || "Unknown")}</td>${KS.map(k => `<td style="${ft && ft !== k ? "opacity:.35" : ""}">${stepCell(p.tracks[k])}</td>`).join("")}
+      <td>${p.cam ? esc(p.cam) + (p.cam_source === "tech_hub" ? '<span class="camsrc" title="Inferred from Tech Hub membership. Add to your roster to confirm.">from Tech Hub</span>' : p.cam_source === "asana" ? '<span class="camsrc" title="From the Asana competency application">from Asana</span>' : "") : '<span class="gray-note">No CAM</span>'}</td>${KS.map(k => `<td style="${ft && ft !== k ? "opacity:.35" : ""}">${stepCell(p.tracks[k])}</td>`).join("")}
       <td>${stalledCell(p)}</td><td><button class="ghost cp" data-t="${esc(p.token)}">Copy link</button></td></tr>`).join("") || `<tr><td colspan="7" class="small">No partners match.</td></tr>`;
     document.querySelectorAll("#tb tr[data-i]").forEach(tr => tr.addEventListener("click", e => { if (!e.target.closest(".cp")) openP(+tr.dataset.i); }));
     document.querySelectorAll(".cp").forEach(b => b.addEventListener("click", () => { navigator.clipboard.writeText(new URL("status.html?p=" + b.dataset.t, location.href).href); b.textContent = "Copied ✓"; }));
