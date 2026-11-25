@@ -99,3 +99,5 @@ table.list{width:100%;border-collapse:collapse;font-size:14px}
 .stale{color:#B54708;font-weight:700}
 
 .tablewrap{overflow-x:auto}table.list{width:100%}table.list td:first-child{min-width:200px}table.list td:last-child,table.list th:last-child{white-space:nowrap;width:1%}main.wide{max-width:1320px}
+
+.b-warn{background:#FFF4ED;color:#B93815;border:1px solid #F9DBAF}.camsrc{font-size:10.5px;color:var(--mut);margin-left:4px}
