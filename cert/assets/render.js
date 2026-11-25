@@ -20,8 +20,20 @@ function stagePhrase(t) {
   if (t.step === 4) return {cls: "b-done", txt: "Deployment Certified 🏆"};
   if (t.step === 3) return {cls: "b-active", txt: "Competency ✓ · Not yet certified"};
   if (t.step === 2) {
-    const st = (t.application?.status || "").toLowerCase();
-    return {cls: "b-active", txt: st.includes("approved") ? "Applied · Demo in progress" : "Applied · Awaiting acceptance"};
+    const a = t.application || {}, g = a.grade;
+    const internal = typeof window !== "undefined" && window.CERT_INTERNAL;
+    const txt = {
+      applied: "Applied · Awaiting acceptance",
+      accepted: "Accepted · Demo due" + (a.demo_due ? " " + fmtDate(a.demo_due) : ""),
+      demo_submitted: "Demo submitted · Awaiting review",
+      grading: "Demo submitted · Being graded",
+      resubmit: internal ? `Resubmission needed${g ? " · " + g.score : ""}` : "Demo reviewed · Check your email",
+      passed: internal ? `Demo passed${g ? " · " + g.score : ""}` : "Demo reviewed · Check your email",
+      failed: internal ? "Competency failed" : "Demo reviewed · Check your email",
+      rejected: internal ? "Application rejected" : "Check your email",
+    }[a.stage] || "Applied";
+    const warn = internal && ["resubmit", "failed", "rejected"].includes(a.stage);
+    return {cls: warn ? "b-warn" : "b-active", txt};
   }
   return null;
 }
@@ -73,7 +85,10 @@ function grid(view, t) {
 function applyBox(t) {
   let comp;
   if (t.step >= 3) comp = `<div class="ap done">✅ <b>Sales Competency granted</b></div>`;
-  else if (t.application) comp = `<div class="ap done">✅ <b>Applied for the Sales Competency</b> on ${esc(fmtDate(t.application.submitted))}. Don't re-apply. Next emails come from zucompetencies@zoom.com.</div>`;
+  else if (t.application) {
+    const a = t.application, extra = a.stage === "accepted" && a.demo_due ? ` Your demo is due <b>${esc(fmtDate(a.demo_due))}</b>.` : "";
+    comp = `<div class="ap done">✅ <b>Applied for the Sales Competency</b> on ${esc(fmtDate(a.submitted))}.${extra} Don't re-apply. Next emails come from zucompetencies@zoom.com.</div>`;
+  }
   else comp = `<div class="ap">${t.form ? `<a class="btn" href="${esc(t.form)}" target="_blank" rel="noopener">Apply for the ${esc(t.comp_name)} →</a>` : `<b>${esc(t.comp_name)} application:</b> confirm URL`}
       <div class="small" style="margin-top:6px">${t.comp_ready.length >= 2 ? "You have the 2 accredited people you need, so you're ready to apply." : `Apply once 2 people each hold ${t.comp_courses.map(esc).join(" + ")}.`} One person submits for the team. Emails come from zucompetencies@zoom.com.</div></div>`;
   const dep = t.step === 4 ? `<div class="ap done">🏆 <b>Deployment Certified</b></div>`
